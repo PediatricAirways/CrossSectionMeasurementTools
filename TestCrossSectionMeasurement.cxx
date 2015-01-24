@@ -6,6 +6,7 @@
 #include <vtkPoints.h>
 #include <vtkPolyData.h>
 #include <vtkSmartPointer.h>
+#include "vtkThreshold.h"
 #include <vtkXMLImageDataReader.h>
 #include <vtkXMLPolyDataWriter.h>
 
@@ -36,9 +37,15 @@ int main(int argc, char* argv[])
   vtkSmartPointer<vtkPolyData> pointSet = vtkSmartPointer<vtkPolyData>::New();
   pointSet->SetPoints( samplePoints );
 
+  // Threshold the image file to get rid of the NaNs
+  vtkSmartPointer<vtkThreshold> threshold = vtkSmartPointer<vtkThreshold>::New();
+  threshold->ThresholdBetween(0.0, 1.0);
+  threshold->AllScalarsOn();
+  threshold->SetInputConnection( reader->GetOutputPort() );
+
   vtkSmartPointer<vtkContourAtPointsFilter> crossSectionFilter =
     vtkSmartPointer<vtkContourAtPointsFilter>::New();
-  crossSectionFilter->SetInputConnection( 0, reader->GetOutputPort() );
+  crossSectionFilter->SetInputConnection( 0, threshold->GetOutputPort() );
   crossSectionFilter->SetInputDataObject( 1, pointSet );
 
   vtkSmartPointer<vtkXMLPolyDataWriter> polyDataWriter =
