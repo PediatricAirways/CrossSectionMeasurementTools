@@ -25,8 +25,11 @@ set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS ${CrossSection_VTK_DE
 
 add_executable( TestCrossSectionMeasurement
   TestCrossSectionMeasurement.cxx
-  vtkCrossSectionImageFilter.cxx
+  vtkContourAtPointsFilter.cxx
 )
-target_link_libraries( TestCrossSectionMeasurement ${ITK_LIBRARIES} ${CrossSection_VTK_LIBRARIES} )
+target_link_libraries( TestCrossSectionMeasurement
+  ${ITK_LIBRARIES}
+  ${CrossSection_VTK_LIBRARIES}
+)
 
 add_definitions( -D_SCL_SECURE_NO_WARNINGS )

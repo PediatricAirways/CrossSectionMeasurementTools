@@ -1,4 +1,4 @@
-#include "vtkCrossSectionImageFilter.h"
+#include "vtkContourAtPointsFilter.h"
 
 #include "vtkAlgorithm.h"
 #include "vtkContourFilter.h"
@@ -14,21 +14,21 @@
 #include "vtkThreshold.h"
 
 
-vtkStandardNewMacro(vtkCrossSectionImageFilter);
+vtkStandardNewMacro(vtkContourAtPointsFilter);
 
 //----------------------------------------------------------------------------
-vtkCrossSectionImageFilter::vtkCrossSectionImageFilter()
+vtkContourAtPointsFilter::vtkContourAtPointsFilter()
 {
   this->SetNumberOfInputPorts(2);
 }
 
 //----------------------------------------------------------------------------
-vtkCrossSectionImageFilter::~vtkCrossSectionImageFilter()
+vtkContourAtPointsFilter::~vtkContourAtPointsFilter()
 {
 }
 
 //----------------------------------------------------------------------------
-int vtkCrossSectionImageFilter::RequestData(
+int vtkContourAtPointsFilter::RequestData(
   vtkInformation *vtkNotUsed(request),
   vtkInformationVector **inputVector,
   vtkInformationVector *outputVector)
@@ -97,7 +97,7 @@ int vtkCrossSectionImageFilter::RequestData(
 }
 
 //----------------------------------------------------------------------------
-int vtkCrossSectionImageFilter::FillInputPortInformation(int port, vtkInformation *info)
+int vtkContourAtPointsFilter::FillInputPortInformation(int port, vtkInformation *info)
 {
   if (port == 0)
     {
@@ -114,7 +114,7 @@ int vtkCrossSectionImageFilter::FillInputPortInformation(int port, vtkInformatio
 }
 
 //----------------------------------------------------------------------------
-void vtkCrossSectionImageFilter::PrintSelf(ostream& os, vtkIndent indent)
+void vtkContourAtPointsFilter::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os, indent);
 }

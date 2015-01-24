@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "vtkCrossSectionImageFilter.h"
+#include "vtkContourAtPointsFilter.h"
 
 #include <vtkImageThreshold.h>
 #include <vtkPoints.h>
@@ -36,8 +36,8 @@ int main(int argc, char* argv[])
   vtkSmartPointer<vtkPolyData> pointSet = vtkSmartPointer<vtkPolyData>::New();
   pointSet->SetPoints( samplePoints );
 
-  vtkSmartPointer<vtkCrossSectionImageFilter> crossSectionFilter =
-    vtkSmartPointer<vtkCrossSectionImageFilter>::New();
+  vtkSmartPointer<vtkContourAtPointsFilter> crossSectionFilter =
+    vtkSmartPointer<vtkContourAtPointsFilter>::New();
   crossSectionFilter->SetInputConnection( 0, reader->GetOutputPort() );
   crossSectionFilter->SetInputDataObject( 1, pointSet );
 
