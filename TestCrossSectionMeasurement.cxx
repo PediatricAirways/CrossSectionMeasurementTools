@@ -3,15 +3,20 @@
 #include "vtkContourAtPointsFilter.h"
 
 #include <vtkCellArray.h>
+#include <vtkCutter.h>
 #include <vtkIdList.h>
 #include <vtkImageThreshold.h>
+#include <vtkMassProperties.h>
+#include <vtkPlane.h>
 #include <vtkPoints.h>
 #include <vtkPolyData.h>
 #include <vtkPolyDataConnectivityFilter.h>
 #include <vtkSmartPointer.h>
 #include <vtkThreshold.h>
 #include <vtkTriangle.h>
+#include <vtkTriangleFilter.h>
 #include <vtkXMLImageDataReader.h>
+#include <vtkXMLPolyDataReader.h>
 #include <vtkXMLPolyDataWriter.h>
 
 
@@ -24,12 +29,18 @@ int main(int argc, char* argv[])
     }
 
   std::string inputImageFile(argv[1]);
-  std::string outputPolyDataFile(argv[2]);
+  std::string inputPolyDataFile(argv[2]);
+  std::string outputPolyDataFile(argv[3]);
 
   // Load image file
   vtkSmartPointer<vtkXMLImageDataReader> reader =
     vtkSmartPointer<vtkXMLImageDataReader>::New();
-  reader->SetFileName( argv[1] );
+  reader->SetFileName( inputImageFile.c_str() );
+
+  // Load surface file
+  vtkSmartPointer<vtkXMLPolyDataReader> surfaceReader =
+    vtkSmartPointer<vtkXMLPolyDataReader>::New();
+  surfaceReader->SetFileName( inputPolyDataFile.c_str() );
 
   // Set up cross section sample points
   vtkSmartPointer<vtkPoints> samplePoints = vtkSmartPointer<vtkPoints>::New();
@@ -61,7 +72,7 @@ int main(int argc, char* argv[])
 
   vtkSmartPointer<vtkXMLPolyDataWriter> polyDataWriter =
     vtkSmartPointer<vtkXMLPolyDataWriter>::New();
-  polyDataWriter->SetFileName( argv[2] );
+  polyDataWriter->SetFileName( outputPolyDataFile.c_str() );
   polyDataWriter->SetInputConnection( connected->GetOutputPort() );
   polyDataWriter->Update();
 
@@ -125,6 +136,46 @@ int main(int argc, char* argv[])
               << averageNormal[0] << ", "
               << averageNormal[1] << ", "
               << averageNormal[2] << std::endl;
+
+    // Now cut the polygonal model from the segmentation by the plane
+    // defined by the center of mass and normal
+    vtkSmartPointer<vtkPlane> plane = vtkSmartPointer<vtkPlane>::New();
+    plane->SetOrigin( centerOfMass );
+    plane->SetNormal( averageNormal );
+
+    vtkSmartPointer<vtkCutter> cutter = vtkSmartPointer<vtkCutter>::New();
+    cutter->SetCutFunction( plane );
+    cutter->GenerateCutScalarsOn();
+    cutter->SetNumberOfContours( 0 );
+    cutter->SetValue( 0, 0.0 );
+    cutter->SetInputConnection( surfaceReader->GetOutputPort() );
+    cutter->Update();
+
+    vtkSmartPointer<vtkPolyDataConnectivityFilter> planarCutConnectivity =
+      vtkSmartPointer<vtkPolyDataConnectivityFilter>::New();
+    planarCutConnectivity->SetExtractionModeToClosestPointRegion();
+    planarCutConnectivity->SetClosestPoint( centerOfMass );
+    planarCutConnectivity->SetInputConnection( cutter->GetOutputPort() );
+
+    vtkSmartPointer<vtkXMLPolyDataWriter> cutterWriter =
+      vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+    cutterWriter->SetFileName( "cut.vtp" );
+    cutterWriter->SetInputConnection( planarCutConnectivity->GetOutputPort() );
+    cutterWriter->Update();
+
+    vtkSmartPointer<vtkTriangleFilter> triangulate =
+      vtkSmartPointer<vtkTriangleFilter>::New();
+    triangulate->SetInputConnection( planarCutConnectivity->GetOutputPort() );
+    triangulate->Update();
+
+    // Now measure the surface area of the cross section
+    vtkSmartPointer<vtkMassProperties> massProperties =
+      vtkSmartPointer<vtkMassProperties>::New();
+    massProperties->SetInputConnection( triangulate->GetOutputPort() );
+    massProperties->Update();
+
+    std::cout << "surface area: " << massProperties->GetSurfaceArea()
+              << std::endl;
     }
 
   return EXIT_SUCCESS;
