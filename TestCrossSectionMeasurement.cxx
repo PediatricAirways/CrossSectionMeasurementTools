@@ -86,6 +86,7 @@ int main(int argc, char* argv[])
     vtkSmartPointer<vtkTriangle> triangle = vtkSmartPointer<vtkTriangle>::New();
     vtkSmartPointer<vtkIdList> ptList = vtkSmartPointer<vtkIdList>::New();
     double centerOfMass[3] = { 0.0, 0.0, 0.0 };
+    double averageNormal[3] = { 0.0, 0.0, 0.0 };
     double totalArea = 0.0;
     while ( ca->GetNextCell( ptList ) )
       {
@@ -96,12 +97,14 @@ int main(int argc, char* argv[])
       double area = vtkTriangle::TriangleArea( p0, p1, p2 );
       totalArea += area;
 
-      double center[3];
+      double center[3], normal[3];
       vtkTriangle::TriangleCenter( p0, p1, p2, center );
+      vtkTriangle::ComputeNormal( p0, p1, p2, normal );
 
       for ( int i = 0; i < 3; ++i )
         {
-        centerOfMass[i] += area * center[i];
+        centerOfMass[i]  += area * center[i];
+        averageNormal[i] += area * normal[i];
         }
       }
 
@@ -109,8 +112,19 @@ int main(int argc, char* argv[])
     centerOfMass[1] /= totalArea;
     centerOfMass[2] /= totalArea;
 
-    std::cout << "com: " << centerOfMass[0] << ", "
-              << centerOfMass[1] << ", " << centerOfMass[2] << std::endl;
+    std::cout << "com: "
+              << centerOfMass[0] << ", "
+              << centerOfMass[1] << ", "
+              << centerOfMass[2] << std::endl;
+
+    averageNormal[0] /= totalArea;
+    averageNormal[1] /= totalArea;
+    averageNormal[2] /= totalArea;
+
+    std::cout << "normal: "
+              << averageNormal[0] << ", "
+              << averageNormal[1] << ", "
+              << averageNormal[2] << std::endl;
     }
 
   return EXIT_SUCCESS;
