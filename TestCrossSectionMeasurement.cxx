@@ -2,6 +2,7 @@
 
 #include "vtkContourAtPointsFilter.h"
 
+#include <vtkAppendPolyData.h>
 #include <vtkCellArray.h>
 #include <vtkCutter.h>
 #include <vtkIdList.h>
@@ -15,6 +16,7 @@
 #include <vtkThreshold.h>
 #include <vtkTriangle.h>
 #include <vtkTriangleFilter.h>
+#include <vtkStripper.h>
 #include <vtkXMLImageDataReader.h>
 #include <vtkXMLPolyDataReader.h>
 #include <vtkXMLPolyDataWriter.h>
@@ -75,6 +77,10 @@ int main(int argc, char* argv[])
   polyDataWriter->SetFileName( outputPolyDataFile.c_str() );
   polyDataWriter->SetInputConnection( connected->GetOutputPort() );
   polyDataWriter->Update();
+
+  // Append all planar cross sections
+  vtkSmartPointer<vtkAppendPolyData> append =
+    vtkSmartPointer<vtkAppendPolyData>::New();
 
   // Now we extract each cross section, compute the center of gravity,
   // and the average normal.
@@ -157,16 +163,26 @@ int main(int argc, char* argv[])
     planarCutConnectivity->SetClosestPoint( centerOfMass );
     planarCutConnectivity->SetInputConnection( cutter->GetOutputPort() );
 
-    vtkSmartPointer<vtkXMLPolyDataWriter> cutterWriter =
-      vtkSmartPointer<vtkXMLPolyDataWriter>::New();
-    cutterWriter->SetFileName( "cut.vtp" );
-    cutterWriter->SetInputConnection( planarCutConnectivity->GetOutputPort() );
-    cutterWriter->Update();
+    // Convert planar cut into line strips
+    vtkSmartPointer<vtkStripper> stripper = vtkSmartPointer<vtkStripper>::New();
+    stripper->SetInputConnection( planarCutConnectivity->GetOutputPort() );
+    stripper->Update();
+
+    // Convert the poly line from the cut to a polygon
+    vtkPolyData* cut = stripper->GetOutput();
+
+    vtkCell* polyLine = cut->GetCell( 0 ); // Assumes one cut object
+    vtkSmartPointer<vtkPolyData> polygon = vtkSmartPointer<vtkPolyData>::New();
+    polygon->Allocate();
+    polygon->SetPoints( cut->GetPoints() );
+    polygon->InsertNextCell( VTK_POLYGON, polyLine->GetPointIds() );
 
     vtkSmartPointer<vtkTriangleFilter> triangulate =
       vtkSmartPointer<vtkTriangleFilter>::New();
-    triangulate->SetInputConnection( planarCutConnectivity->GetOutputPort() );
+    triangulate->SetInputData( polygon );
     triangulate->Update();
+
+    append->AddInputConnection( triangulate->GetOutputPort() );
 
     // Now measure the surface area of the cross section
     vtkSmartPointer<vtkMassProperties> massProperties =
@@ -177,6 +193,12 @@ int main(int argc, char* argv[])
     std::cout << "surface area: " << massProperties->GetSurfaceArea()
               << std::endl;
     }
+
+  vtkSmartPointer<vtkXMLPolyDataWriter> cutterWriter =
+    vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+  cutterWriter->SetFileName( "cut.vtp" );
+  cutterWriter->SetInputConnection( append->GetOutputPort() );
+  cutterWriter->Update();
 
   return EXIT_SUCCESS;
 }
