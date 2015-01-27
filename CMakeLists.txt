@@ -2,8 +2,11 @@ project(vtkCrossSectionMeasurement)
 cmake_minimum_required(VERSION 2.8)
 
 # Include ITK
-find_package( ITK REQUIRED )
+find_package( ITK 4 REQUIRED )
 include( ${ITK_USE_FILE} )
+
+find_package(SlicerExecutionModel REQUIRED)
+include(${SlicerExecutionModel_USE_FILE})
 
 # Include VTK
 find_package( VTK REQUIRED )
@@ -30,6 +33,16 @@ add_executable( TestCrossSectionMeasurement
 target_link_libraries( TestCrossSectionMeasurement
   ${ITK_LIBRARIES}
   ${CrossSection_VTK_LIBRARIES}
+)
+
+SEMMacroBuildCLI(
+  NAME MeasureCrossSections
+  ADDITIONAL_SRCS
+    vtkContourAtPointsFilter.cxx
+  TARGET_LIBRARIES
+    ${ITK_LIBRARIES}
+    ${CrossSection_VTK_LIBRARIES}
+  EXECUTABLE_ONLY
 )
 
 add_definitions( -D_SCL_SECURE_NO_WARNINGS )

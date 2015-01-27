@@ -14,6 +14,8 @@
 #include <vtkPolyDataConnectivityFilter.h>
 #include <vtkSmartPointer.h>
 #include <vtkThreshold.h>
+#include <vtkTransform.h>
+#include <vtkTransformFilter.h>
 #include <vtkTriangle.h>
 #include <vtkTriangleFilter.h>
 #include <vtkStripper.h>
@@ -24,15 +26,17 @@
 
 int main(int argc, char* argv[])
 {
-  if (argc < 3)
+  if (argc < 4)
     {
-    std::cerr << "Usage: " << argv[0] << " <image file> <output polydata file>\n";
+    std::cerr << "Usage: " << argv[0]
+              << " <image file> <sample points> <segmentation polydata> <output polydata file>\n";
     return EXIT_FAILURE;
     }
 
-  std::string inputImageFile(argv[1]);
-  std::string inputPolyDataFile(argv[2]);
-  std::string outputPolyDataFile(argv[3]);
+  std::string inputImageFile( argv[1] );
+  std::string inputPointFile( argv[2] );
+  std::string inputPolyDataFile( argv[3] );
+  std::string outputPolyDataFile( argv[4] );
 
   // Load image file
   vtkSmartPointer<vtkXMLImageDataReader> reader =
@@ -44,6 +48,16 @@ int main(int argc, char* argv[])
     vtkSmartPointer<vtkXMLPolyDataReader>::New();
   surfaceReader->SetFileName( inputPolyDataFile.c_str() );
 
+  // Flip x and y axes of surface file
+  vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
+  transform->Scale( -1, -1, 1 );
+
+  vtkSmartPointer<vtkTransformFilter> transformedSurface =
+    vtkSmartPointer<vtkTransformFilter>::New();
+  transformedSurface->SetTransform( transform );
+  transformedSurface->SetInputConnection( surfaceReader->GetOutputPort() );
+
+#if 0
   // Set up cross section sample points
   vtkSmartPointer<vtkPoints> samplePoints = vtkSmartPointer<vtkPoints>::New();
   samplePoints->SetNumberOfPoints( 2 );
@@ -53,6 +67,15 @@ int main(int argc, char* argv[])
 
   vtkSmartPointer<vtkPolyData> pointSet = vtkSmartPointer<vtkPolyData>::New();
   pointSet->SetPoints( samplePoints );
+#else
+  // Load points file
+  vtkSmartPointer<vtkXMLPolyDataReader> pointReader =
+    vtkSmartPointer<vtkXMLPolyDataReader>::New();
+  pointReader->SetFileName( inputPointFile.c_str() );
+  pointReader->Update();
+
+  vtkSmartPointer<vtkPolyData> pointSet = pointReader->GetOutput();
+#endif
 
   // Threshold the image file to get rid of the NaNs
   vtkSmartPointer<vtkThreshold> threshold = vtkSmartPointer<vtkThreshold>::New();
@@ -74,7 +97,7 @@ int main(int argc, char* argv[])
 
   vtkSmartPointer<vtkXMLPolyDataWriter> polyDataWriter =
     vtkSmartPointer<vtkXMLPolyDataWriter>::New();
-  polyDataWriter->SetFileName( outputPolyDataFile.c_str() );
+  polyDataWriter->SetFileName( "contours.vtp" );
   polyDataWriter->SetInputConnection( connected->GetOutputPort() );
   polyDataWriter->Update();
 
@@ -84,13 +107,13 @@ int main(int argc, char* argv[])
 
   // Now we extract each cross section, compute the center of gravity,
   // and the average normal.
-  for ( vtkIdType ptId = 0; ptId < samplePoints->GetNumberOfPoints(); ++ptId )
+  for ( vtkIdType ptId = 0; ptId < pointSet->GetNumberOfPoints(); ++ptId )
     {
     vtkSmartPointer< vtkPolyDataConnectivityFilter > contourConnected =
       vtkSmartPointer< vtkPolyDataConnectivityFilter >::New();
     contourConnected->SetExtractionModeToClosestPointRegion();
     double point[3];
-    samplePoints->GetPoint( ptId, point );
+    pointSet->GetPoint( ptId, point );
     contourConnected->SetClosestPoint( point );
     contourConnected->SetInputConnection( contourFilter->GetOutputPort() );
     contourConnected->Update();
@@ -154,7 +177,7 @@ int main(int argc, char* argv[])
     cutter->GenerateCutScalarsOn();
     cutter->SetNumberOfContours( 0 );
     cutter->SetValue( 0, 0.0 );
-    cutter->SetInputConnection( surfaceReader->GetOutputPort() );
+    cutter->SetInputConnection( transformedSurface->GetOutputPort() );
     cutter->Update();
 
     vtkSmartPointer<vtkPolyDataConnectivityFilter> planarCutConnectivity =
@@ -196,7 +219,7 @@ int main(int argc, char* argv[])
 
   vtkSmartPointer<vtkXMLPolyDataWriter> cutterWriter =
     vtkSmartPointer<vtkXMLPolyDataWriter>::New();
-  cutterWriter->SetFileName( "cut.vtp" );
+  cutterWriter->SetFileName( outputPolyDataFile.c_str() );
   cutterWriter->SetInputConnection( append->GetOutputPort() );
   cutterWriter->Update();
 
