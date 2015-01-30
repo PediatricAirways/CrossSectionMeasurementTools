@@ -28,12 +28,22 @@
 #include <itkResampleImageFilter.h>
 #include <itkSpatialOrientationAdapter.h>
 
+#include <vtkAppendPolyData.h>
+#include <vtkCellArray.h>
+#include <vtkCutter.h>
+#include <vtkMassProperties.h>
+#include <vtkPlane.h>
 #include <vtkPoints.h>
 #include <vtkPolyData.h>
+#include <vtkPolyDataConnectivityFilter.h>
 #include <vtkSmartPointer.h>
+#include <vtkStripper.h>
 #include <vtkTransform.h>
 #include <vtkTransformFilter.h>
+#include <vtkTriangle.h>
+#include <vtkTriangleFilter.h>
 #include <vtkThreshold.h>
+#include <vtkXMLPolyDataReader.h>
 #include <vtkXMLPolyDataWriter.h>
 
 #include "vtkContourAtPointsFilter.h"
@@ -120,103 +130,50 @@ int DoIt( int argc, char* argv[], T )
   typename HeatFlowImageType::Pointer originalImage =
     heatFlowReader->GetOutput();
 
-  // Automatic Resampling to RAI
+  vtkSmartPointer<vtkXMLPolyDataReader> segmentationSurfaceReader =
+    vtkSmartPointer<vtkXMLPolyDataReader>::New();
+  segmentationSurfaceReader->SetFileName( segmentedSurface.c_str() );
+  segmentationSurfaceReader->Update();
+
+  // Slicer assumes poly data is in RAS space. We are operating in
+  // LPS, so we need to convert the surface hear.
+  vtkSmartPointer<vtkTransform> RASToLPSTransform = vtkSmartPointer<vtkTransform>::New();
+  RASToLPSTransform->Scale( -1.0, -1.0, 1.0 );
+
+  vtkSmartPointer<vtkTransformFilter> transformedSegmentationSurface =
+    vtkSmartPointer<vtkTransformFilter>::New();
+  transformedSegmentationSurface->SetTransform( RASToLPSTransform );
+  transformedSegmentationSurface->
+    SetInputConnection( segmentationSurfaceReader->GetOutputPort() );
+
+  // Input images are in LPS coordinate system while segmented surface
+  // is in RAS. Do everything in LPS.
+
+  // First verify that image is in LPS orientation
+
   typename HeatFlowImageType::DirectionType originalImageDirection =
     originalImage->GetDirection();
 
-  itk::SpatialOrientationAdapter adapter;
-  typename HeatFlowImageType::DirectionType RAIDirection =
-    adapter.ToDirectionCosines(itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RAI);
+  typename HeatFlowImageType::DirectionType LPSDirection;
+  LPSDirection.SetIdentity();
 
-  bool shouldConvert = false;
+  bool notLPS = false;
   for ( int i = 0; i < 3; ++i )
     {
     for ( int j = 0; j < 3; ++j )
       {
-      if (abs(originalImageDirection[i][j] - RAIDirection[i][j]) > 1e-6)
+      if (abs(originalImageDirection[i][j] - LPSDirection[i][j]) > 1e-6)
         {
-        shouldConvert = true;
+        notLPS = true;
         break;
         }
       }
     }
 
-  typedef itk::ResampleImageFilter< HeatFlowImageType, HeatFlowImageType > ResampleImageFilterType;
-  typename ResampleImageFilterType::Pointer resampleFilter = ResampleImageFilterType::New();
-
-  if ( shouldConvert )
+  if ( notLPS )
     {
-    typedef itk::IdentityTransform< double, DIMENSION > IdentityTransformType;
-
-    // Figure out bounding box of rotated image
-    double boundingBox[6] = { DBL_MAX, -DBL_MAX, DBL_MAX, -DBL_MAX, DBL_MAX, -DBL_MAX };
-    typedef typename HeatFlowImageType::IndexType  IndexType;
-    typedef typename HeatFlowImageType::RegionType RegionType;
-    typedef typename HeatFlowImageType::PointType  PointType;
-
-    RegionType region = originalImage->GetLargestPossibleRegion();
-    IndexType lowerUpper[2];
-    lowerUpper[0] = region.GetIndex();
-    lowerUpper[1] = region.GetUpperIndex();
-
-    for ( unsigned int i = 0; i < 8; ++i )
-      {
-      IndexType cornerIndex;
-      cornerIndex[0] = lowerUpper[ (i & 1u) >> 0 ][0];
-      cornerIndex[1] = lowerUpper[ (i & 2u) >> 1 ][1];
-      cornerIndex[2] = lowerUpper[ (i & 4u) >> 2 ][2];
-      std::cout << "cornerIndex: " << cornerIndex << std::endl;
-
-      PointType point;
-      originalImage->TransformIndexToPhysicalPoint( cornerIndex, point );
-      boundingBox[0] = std::min( point[0], boundingBox[0] );
-      boundingBox[1] = std::max( point[0], boundingBox[1] );
-      boundingBox[2] = std::min( point[1], boundingBox[2] );
-      boundingBox[3] = std::max( point[1], boundingBox[3] );
-      boundingBox[4] = std::min( point[2], boundingBox[4] );
-      boundingBox[5] = std::max( point[2], boundingBox[5] );
-      }
-
-    // Now transform the bounding box from physical space to index space
-    PointType lowerPoint;
-    lowerPoint[0] = boundingBox[0];
-    lowerPoint[1] = boundingBox[2];
-    lowerPoint[2] = boundingBox[4];
-
-    PointType upperPoint;
-    upperPoint[0] = boundingBox[1];
-    upperPoint[1] = boundingBox[3];
-    upperPoint[2] = boundingBox[5];
-
-    typename HeatFlowImageType::Pointer dummyImage = HeatFlowImageType::New();
-    dummyImage->SetOrigin( lowerPoint );
-    dummyImage->SetSpacing( originalImage->GetSpacing() );
-    dummyImage->SetLargestPossibleRegion( RegionType() );
-
-    IndexType newLower, newUpper;
-    dummyImage->TransformPhysicalPointToIndex( lowerPoint, newLower );
-    dummyImage->TransformPhysicalPointToIndex( upperPoint, newUpper );
-
-    RegionType outputRegion;
-    outputRegion.SetIndex( newLower );
-    outputRegion.SetUpperIndex( newUpper );
-
-    // Find the minimum pixel value in the image. This will be used as
-    // the default value in the resample filter.
-    typedef itk::MinimumMaximumImageCalculator< HeatFlowImageType > MinMaxType;
-    typename MinMaxType::Pointer minMaxCalculator = MinMaxType::New();
-    minMaxCalculator->SetImage( originalImage );
-    minMaxCalculator->Compute();
-
-    resampleFilter->SetTransform( IdentityTransformType::New() );
-    resampleFilter->SetInput( originalImage );
-    resampleFilter->SetSize( outputRegion.GetSize() );
-    resampleFilter->SetOutputOrigin( lowerPoint );
-    resampleFilter->SetOutputSpacing( originalImage->GetSpacing() );
-    resampleFilter->SetDefaultPixelValue( minMaxCalculator->GetMinimum() );
-    resampleFilter->Update();
-
-    originalImage = resampleFilter->GetOutput();
+    std::cerr << "Heat flow image is not in LPS coordinate system.\n";
+    return EXIT_FAILURE;
     }
 
   // Convert ITK image to VTK image
@@ -231,7 +188,8 @@ int DoIt( int argc, char* argv[], T )
   threshold->AllScalarsOn();
   threshold->SetInputData( itk2vtkFilter->GetOutput() );
 
-  // Create point set from markups
+  // Create point set from markups. Markups are defined in LPS
+  // coordinate system (see MeasureCrossSections.xml).
   vtkSmartPointer<vtkPoints> samplePoints = vtkSmartPointer<vtkPoints>::New();
   samplePoints->SetNumberOfPoints( crossSectionPoints.size() );
   for ( size_t i = 0; i < crossSectionPoints.size(); ++i )
@@ -254,13 +212,131 @@ int DoIt( int argc, char* argv[], T )
   contourFilter->SetInputConnection( 0, threshold->GetOutputPort() );
   contourFilter->SetInputDataObject( 1, pointSet );
 
-  vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
-  transform->Scale( -1.0, -1.0, 1.0 );
+  // Append all planar cross sections
+  vtkSmartPointer<vtkAppendPolyData> appender = vtkSmartPointer<vtkAppendPolyData>::New();
+
+  // Now we extract each cross section, compute the center of gravity,
+  // and the average normal.
+  for ( vtkIdType ptId = 0; ptId < pointSet->GetNumberOfPoints(); ++ptId )
+    {
+    vtkSmartPointer< vtkPolyDataConnectivityFilter > contourConnected =
+      vtkSmartPointer< vtkPolyDataConnectivityFilter >::New();
+    contourConnected->SetExtractionModeToClosestPointRegion();
+    double point[3];
+    pointSet->GetPoint( ptId, point );
+    contourConnected->SetClosestPoint( point );
+    contourConnected->SetInputConnection( contourFilter->GetOutputPort() );
+    contourConnected->Update();
+    vtkPolyData* pd = contourConnected->GetOutput();
+    vtkCellArray* ca = pd->GetPolys();
+
+    // Center of mass of surface elements is the average of the
+    // centers of the surface triangles weighted by the triangle area.
+    ca->InitTraversal();
+    vtkSmartPointer<vtkTriangle> triangle = vtkSmartPointer<vtkTriangle>::New();
+    vtkSmartPointer<vtkIdList> ptList = vtkSmartPointer<vtkIdList>::New();
+    double centerOfMass[3] = { 0.0, 0.0, 0.0 };
+    double averageNormal[3] = { 0.0, 0.0, 0.0 };
+    double totalArea = 0.0;
+    while ( ca->GetNextCell( ptList ) )
+      {
+      double p0[3], p1[3], p2[3];
+      pd->GetPoint( ptList->GetId( 0 ), p0 );
+      pd->GetPoint( ptList->GetId( 1 ), p1 );
+      pd->GetPoint( ptList->GetId( 2 ), p2 );
+      double area = vtkTriangle::TriangleArea( p0, p1, p2 );
+      totalArea += area;
+
+      double center[3], normal[3];
+      vtkTriangle::TriangleCenter( p0, p1, p2, center );
+      vtkTriangle::ComputeNormal( p0, p1, p2, normal );
+
+      for ( int i = 0; i < 3; ++i )
+        {
+        centerOfMass[i]  += area * center[i];
+        averageNormal[i] += area * normal[i];
+        }
+      }
+
+    centerOfMass[0] /= totalArea;
+    centerOfMass[1] /= totalArea;
+    centerOfMass[2] /= totalArea;
+
+    std::cout << "com: "
+              << centerOfMass[0] << ", "
+              << centerOfMass[1] << ", "
+              << centerOfMass[2] << std::endl;
+
+    averageNormal[0] /= totalArea;
+    averageNormal[1] /= totalArea;
+    averageNormal[2] /= totalArea;
+
+    std::cout << "normal: "
+              << averageNormal[0] << ", "
+              << averageNormal[1] << ", "
+              << averageNormal[2] << std::endl;
+
+    // Now cut the polygonal model from the segmentation by the plane
+    // defined by the center of mass and normal
+    vtkSmartPointer<vtkPlane> plane = vtkSmartPointer<vtkPlane>::New();
+    plane->SetOrigin( centerOfMass );
+    plane->SetNormal( averageNormal );
+
+    vtkSmartPointer<vtkCutter> cutter = vtkSmartPointer<vtkCutter>::New();
+    cutter->SetCutFunction( plane );
+    cutter->GenerateCutScalarsOn();
+    cutter->SetNumberOfContours( 0 );
+    cutter->SetValue( 0, 0.0 );
+    cutter->SetInputConnection( transformedSegmentationSurface->GetOutputPort() );
+    cutter->Update();
+
+    vtkSmartPointer<vtkPolyDataConnectivityFilter> planarCutConnectivity =
+      vtkSmartPointer<vtkPolyDataConnectivityFilter>::New();
+    planarCutConnectivity->SetExtractionModeToClosestPointRegion();
+    planarCutConnectivity->SetClosestPoint( centerOfMass );
+    planarCutConnectivity->SetInputConnection( cutter->GetOutputPort() );
+
+    // Convert planar cut into line strips
+    vtkSmartPointer<vtkStripper> stripper = vtkSmartPointer<vtkStripper>::New();
+    stripper->SetInputConnection( planarCutConnectivity->GetOutputPort() );
+    stripper->Update();
+
+    // Convert the poly line from the cut to a polygon
+    vtkPolyData* cut = stripper->GetOutput();
+
+    vtkCell* polyLine = cut->GetCell( 0 ); // Assumes one cut object
+    vtkSmartPointer<vtkPolyData> polygon = vtkSmartPointer<vtkPolyData>::New();
+    polygon->Allocate();
+    polygon->SetPoints( cut->GetPoints() );
+    polygon->InsertNextCell( VTK_POLYGON, polyLine->GetPointIds() );
+
+    vtkSmartPointer<vtkTriangleFilter> triangulate =
+      vtkSmartPointer<vtkTriangleFilter>::New();
+    triangulate->SetInputData( polygon );
+    triangulate->Update();
+
+    appender->AddInputConnection( triangulate->GetOutputPort() );
+
+    // Now measure the surface area of the cross section
+    vtkSmartPointer<vtkMassProperties> massProperties =
+      vtkSmartPointer<vtkMassProperties>::New();
+    massProperties->SetInputConnection( triangulate->GetOutputPort() );
+    massProperties->Update();
+
+    std::cout << "surface area: " << massProperties->GetSurfaceArea()
+              << std::endl;
+    }
+
+  // VTK data has no associated transform, so Slicer assumes it is
+  // in the RAS coordinate space. We are operating in LPS space, so we
+  // need to convert to RAS here.
+  vtkSmartPointer<vtkTransform> LPSToRASTransform = vtkSmartPointer<vtkTransform>::New();
+  LPSToRASTransform->Scale( -1.0, -1.0, 1.0 );
 
   vtkSmartPointer<vtkTransformFilter> transformFilter =
     vtkSmartPointer<vtkTransformFilter>::New();
-  transformFilter->SetTransform( transform );
-  transformFilter->SetInputConnection( contourFilter->GetOutputPort() );
+  transformFilter->SetTransform( LPSToRASTransform );
+  transformFilter->SetInputConnection( appender->GetOutputPort() );
 
   // Write contours
   vtkSmartPointer<vtkXMLPolyDataWriter> pdWriter =

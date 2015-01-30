@@ -71,6 +71,7 @@ int vtkContourAtPointsFilter::RequestData(
     vtkSmartPointer<vtkContourFilter>::New();
   contourFilter->SetNumberOfContours(numberOfPoints);
   contourFilter->ComputeNormalsOn();
+  contourFilter->ComputeScalarsOn();
   contourFilter->GenerateTrianglesOn();
   contourFilter->SetInputData(input);
 
