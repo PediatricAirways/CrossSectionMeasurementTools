@@ -31,6 +31,8 @@
 #include <vtkAppendPolyData.h>
 #include <vtkCellArray.h>
 #include <vtkCutter.h>
+#include <vtkDoubleArray.h>
+#include <vtkFieldData.h>
 #include <vtkMassProperties.h>
 #include <vtkPlane.h>
 #include <vtkPoints.h>
@@ -215,6 +217,30 @@ int DoIt( int argc, char* argv[], T )
   // Append all planar cross sections
   vtkSmartPointer<vtkAppendPolyData> appender = vtkSmartPointer<vtkAppendPolyData>::New();
 
+  // Add field data arrays for input points, cross-sectional area, and
+  // cross-section perimeter.
+  vtkIdType numPoints = pointSet->GetNumberOfPoints();
+
+  vtkSmartPointer<vtkDoubleArray> centerOfMassInfo = vtkSmartPointer<vtkDoubleArray>::New();
+  centerOfMassInfo->SetName( "center of mass" );
+  centerOfMassInfo->SetNumberOfComponents( 3 );
+  centerOfMassInfo->SetNumberOfTuples( numPoints );
+
+  vtkSmartPointer<vtkDoubleArray> averageNormalInfo = vtkSmartPointer<vtkDoubleArray>::New();
+  averageNormalInfo->SetName( "normal" );
+  averageNormalInfo->SetNumberOfComponents( 3 );
+  averageNormalInfo->SetNumberOfTuples( numPoints );
+
+  vtkSmartPointer<vtkDoubleArray> areaInfo = vtkSmartPointer<vtkDoubleArray>::New();
+  areaInfo->SetName( "area" );
+  areaInfo->SetNumberOfComponents( 1 );
+  areaInfo->SetNumberOfTuples( numPoints );
+
+  vtkSmartPointer<vtkDoubleArray> perimeterInfo = vtkSmartPointer<vtkDoubleArray>::New();
+  perimeterInfo->SetName( "perimeter" );
+  perimeterInfo->SetNumberOfComponents( 1 );
+  perimeterInfo->SetNumberOfTuples( numPoints );
+
   // Now we extract each cross section, compute the center of gravity,
   // and the average normal.
   for ( vtkIdType ptId = 0; ptId < pointSet->GetNumberOfPoints(); ++ptId )
@@ -224,6 +250,10 @@ int DoIt( int argc, char* argv[], T )
     contourConnected->SetExtractionModeToClosestPointRegion();
     double point[3];
     pointSet->GetPoint( ptId, point );
+
+    std::cout << "point id: " << itk2vtkFilter->GetOutput()->FindPoint( point )
+              << std::endl;
+
     contourConnected->SetClosestPoint( point );
     contourConnected->SetInputConnection( contourFilter->GetOutputPort() );
     contourConnected->Update();
@@ -267,6 +297,8 @@ int DoIt( int argc, char* argv[], T )
               << centerOfMass[1] << ", "
               << centerOfMass[2] << std::endl;
 
+    centerOfMassInfo->SetTupleValue( ptId, centerOfMass );
+
     averageNormal[0] /= totalArea;
     averageNormal[1] /= totalArea;
     averageNormal[2] /= totalArea;
@@ -275,6 +307,8 @@ int DoIt( int argc, char* argv[], T )
               << averageNormal[0] << ", "
               << averageNormal[1] << ", "
               << averageNormal[2] << std::endl;
+
+    averageNormalInfo->SetTupleValue( ptId, averageNormal );
 
     // Now cut the polygonal model from the segmentation by the plane
     // defined by the center of mass and normal
@@ -322,9 +356,31 @@ int DoIt( int argc, char* argv[], T )
       vtkSmartPointer<vtkMassProperties>::New();
     massProperties->SetInputConnection( triangulate->GetOutputPort() );
     massProperties->Update();
+    double surfaceArea = massProperties->GetSurfaceArea();
 
-    std::cout << "surface area: " << massProperties->GetSurfaceArea()
-              << std::endl;
+    std::cout << "surface area: " << surfaceArea << std::endl;
+
+    areaInfo->SetTupleValue( ptId, &surfaceArea );
+
+    // Now compute the perimeter of the cross section.
+    double perimeter = 0.0;
+    vtkIdList* pointIds = polyLine->GetPointIds();
+    int numPolyLinePoints = pointIds->GetNumberOfIds();
+    if ( numPolyLinePoints > 1 )
+      {
+      for (vtkIdType i = 0; i < numPolyLinePoints; ++i)
+        {
+        vtkIdType ptId0 = pointIds->GetId( i );
+        vtkIdType ptId1 = pointIds->GetId( (i + 1) % numPolyLinePoints );
+        double pt0[3], pt1[3];
+        polygon->GetPoints()->GetPoint( ptId0, pt0 );
+        polygon->GetPoints()->GetPoint( ptId1, pt1 );
+
+        perimeter += sqrt( vtkMath::Distance2BetweenPoints( pt0, pt1 ) );
+        }
+      }
+
+    perimeterInfo->SetTupleValue( ptId, &perimeter );
     }
 
   // VTK data has no associated transform, so Slicer assumes it is
@@ -337,12 +393,22 @@ int DoIt( int argc, char* argv[], T )
     vtkSmartPointer<vtkTransformFilter>::New();
   transformFilter->SetTransform( LPSToRASTransform );
   transformFilter->SetInputConnection( appender->GetOutputPort() );
+  transformFilter->Update();
+
+  vtkSmartPointer<vtkPointSet> outputCopy;
+  outputCopy.TakeReference( transformFilter->GetOutput()->NewInstance() );
+  outputCopy->ShallowCopy( transformFilter->GetOutput() );
+  vtkFieldData* fd = outputCopy->GetFieldData();
+  fd->AddArray( centerOfMassInfo );
+  fd->AddArray( averageNormalInfo );
+  fd->AddArray( areaInfo );
+  fd->AddArray( perimeterInfo );
 
   // Write contours
   vtkSmartPointer<vtkXMLPolyDataWriter> pdWriter =
     vtkSmartPointer<vtkXMLPolyDataWriter>::New();
   pdWriter->SetFileName( outputCrossSections.c_str() );
-  pdWriter->SetInputConnection( transformFilter->GetOutputPort() );
+  pdWriter->SetInputData( outputCopy );
   pdWriter->Write();
 
   return returnValue;
