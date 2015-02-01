@@ -79,6 +79,7 @@ int vtkContourAtPointsFilter::RequestData(
   for (int i = 0; i < pointSet->GetNumberOfPoints(); ++i)
     {
     contourFilter->SetValue(i, da->GetTuple1(i));
+    std::cout << "setting value: " << da->GetTuple1(i) << std::endl;
     }
 
   // Create a contour filter and set the isovalues
