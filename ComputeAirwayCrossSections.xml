@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <executable>
   <category>Filtering</category>
-  <title>Measure Cross Sections</title>
+  <title>Compute Cross Sections</title>
   <description><![CDATA[Measures cross section areas from airway data.]]></description>
   <version>1.0</version>
   <documentation-url>TODO</documentation-url>
@@ -34,14 +34,5 @@
       <index>2</index>
       <description><![CDATA[Output contours at sample points.]]></description>
     </geometry>
-  </parameters>
-  <parameters>
-    <label>Cross Section Points</label>
-    <point multiple="true" coordinateSystem="lps">
-      <name>crossSectionPoints</name>
-      <label>Cross section sample points</label>
-      <longflag>--samplePoints</longflag>
-      <description><![CDATA[Points that define where cross sections will be placed.]]></description>
-    </point>
   </parameters>
 </executable>
