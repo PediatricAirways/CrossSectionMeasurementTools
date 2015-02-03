@@ -28,7 +28,9 @@
 #include <itkSpatialOrientationAdapter.h>
 
 #include <vtkAppendPolyData.h>
+#include <vtkBoundingBox.h>
 #include <vtkCellArray.h>
+#include <vtkCleanPolyData.h>
 #include <vtkContourFilter.h>
 #include <vtkCutter.h>
 #include <vtkDataSetSurfaceFilter.h>
@@ -181,7 +183,7 @@ int DoIt( int argc, char* argv[], T )
   vtkUnstructuredGrid* thresholded = threshold->GetOutput();
 
   // Now create a set of 1000 contours along the heat flow image
-  int numContours = 1000;
+  int numContours = 100;
   vtkSmartPointer<vtkContourFilter> contourFilter =
     vtkSmartPointer<vtkContourFilter>::New();
   contourFilter->GenerateValues( numContours, 0.0, 1.0 );
@@ -228,9 +230,16 @@ int DoIt( int argc, char* argv[], T )
     surfaceFilter->SetInputConnection( scalarThreshold->GetOutputPort() );
     surfaceFilter->Update();
 
+    vtkSmartPointer<vtkOctreePointLocator> octree =
+      vtkSmartPointer<vtkOctreePointLocator>::New();
+    octree->SetDataSet( surfaceFilter->GetOutput() );
+    octree->BuildLocator();
+
     // Center of mass of surface elements is the average of the
     // centers of the surface triangles weighted by the triangle area.
     vtkPolyData* pd = surfaceFilter->GetOutput();
+    vtkBoundingBox contourBB( pd->GetBounds() );
+
     vtkCellArray* ca = pd->GetPolys();
 
     ca->InitTraversal();
@@ -270,8 +279,6 @@ int DoIt( int argc, char* argv[], T )
       centerOfMass[0] = centerOfMass[1] = centerOfMass[2] = 0.0;
       }
 
-    centerOfMassInfo->SetTupleValue( contourId, centerOfMass );
-
     if ( totalArea > 0.0 )
       {
       averageNormal[0] /= totalArea;
@@ -282,8 +289,6 @@ int DoIt( int argc, char* argv[], T )
       {
       averageNormal[0] = averageNormal[1] = averageNormal[2] = 0.0;
       }
-
-    averageNormalInfo->SetTupleValue( contourId, averageNormal );
 
     // Now cut the polygonal model from the segmentation by the plane
     // defined by the center of mass and normal
@@ -307,7 +312,6 @@ int DoIt( int argc, char* argv[], T )
     vtkPolyData* cut = stripper->GetOutput();
 
     vtkIdType numCells = cut->GetNumberOfCells();
-    std::cout << "cut cells: " << numCells << std::endl;
 
     if ( numCells == 0 )
       {
@@ -328,13 +332,41 @@ int DoIt( int argc, char* argv[], T )
       polygon->SetPoints( cut->GetPoints() );
       polygon->InsertNextCell( VTK_POLYGON, polyLine->GetPointIds() );
 
+      vtkSmartPointer<vtkCleanPolyData> cleaner = vtkSmartPointer<vtkCleanPolyData>::New();
+      cleaner->SetInputData( polygon );
+
       vtkSmartPointer<vtkTriangleFilter> triangulate =
         vtkSmartPointer<vtkTriangleFilter>::New();
-      triangulate->SetInputData( polygon );
+      triangulate->SetInputConnection( cleaner->GetOutputPort() );
+      triangulate->Update();
+
+      vtkPolyData* planarRegion = triangulate->GetOutput();
+
+      double dist2Threshold = 10.0 * 10.0;
+      double minDist2ToContour = DBL_MAX;
+      for ( vtkIdType cutPtId = 0; cutPtId < planarRegion->GetNumberOfPoints(); ++cutPtId )
+        {
+        double cutPt[3];
+        planarRegion->GetPoint( cutPtId, cutPt );
+        double candidateDist2 = DBL_MAX;
+        vtkIdType nearestId =
+          octree->FindClosestPoint( cutPt[0], cutPt[1], cutPt[2], candidateDist2 );
+        if ( nearestId >= 0 && candidateDist2 < minDist2ToContour )
+          {
+          minDist2ToContour = candidateDist2;
+          }
+        }
+
+      if ( minDist2ToContour > dist2Threshold )
+        {
+        // This region is too far away from the contour; skip it
+        continue;
+        }
 
       crossSectionAppender->AddInputConnection( triangulate->GetOutputPort() );
 
-      // Now compute the perimeter of the cross section.
+      // Now compute the perimeter of this portion of the cross section.
+      // TODO - this should be for the perimeter of the planar cross section
       vtkIdList* pointIds = polyLine->GetPointIds();
       int numPolyLinePoints = pointIds->GetNumberOfIds();
       if ( numPolyLinePoints > 1 )
@@ -353,18 +385,68 @@ int DoIt( int argc, char* argv[], T )
       }
 
     appender->AddInputConnection( crossSectionAppender->GetOutputPort() );
+    crossSectionAppender->Update();
 
-    // Now measure the surface area of the cross section
+    // Now measure the surface area of the planar cross section
+    totalArea = 0.0;
+    centerOfMass[0] = centerOfMass[1] = centerOfMass[2] = 0.0;
+    averageNormal[0] = averageNormal[1] = averageNormal[2] = 0.0;
+    pd = crossSectionAppender->GetOutput();
+    ca = pd->GetPolys();
+    ca->InitTraversal();
+    while ( ca->GetNextCell( ptList ) )
+      {
+      double p0[3], p1[3], p2[3];
+      pd->GetPoint( ptList->GetId( 0 ), p0 );
+      pd->GetPoint( ptList->GetId( 1 ), p1 );
+      pd->GetPoint( ptList->GetId( 2 ), p2 );
+      double area = vtkTriangle::TriangleArea( p0, p1, p2 );
+      totalArea += area;
+
+      double center[3], normal[3];
+      vtkTriangle::TriangleCenter( p0, p1, p2, center );
+      vtkTriangle::ComputeNormal( p0, p1, p2, normal );
+
+      for ( int i = 0; i < 3; ++i )
+        {
+        centerOfMass[i]  += area * center[i];
+        averageNormal[i] += area * normal[i];
+        }
+      }
+
+    if ( totalArea > 0.0 )
+      {
+      centerOfMass[0] /= totalArea;
+      centerOfMass[1] /= totalArea;
+      centerOfMass[2] /= totalArea;
+      }
+    else
+      {
+      centerOfMass[0] = centerOfMass[1] = centerOfMass[2] = 0.0;
+      }
+
+    if ( totalArea > 0.0 )
+      {
+      averageNormal[0] /= totalArea;
+      averageNormal[1] /= totalArea;
+      averageNormal[2] /= totalArea;
+      }
+    else
+      {
+      averageNormal[0] = averageNormal[1] = averageNormal[2] = 0.0;
+      }
+
     vtkSmartPointer<vtkMassProperties> massProperties =
       vtkSmartPointer<vtkMassProperties>::New();
     massProperties->SetInputConnection( crossSectionAppender->GetOutputPort() );
     massProperties->Update();
     double surfaceArea = massProperties->GetSurfaceArea();
+    std::cout << "mass properties sa: " << surfaceArea << ", " << totalArea << std::endl;
 
     areaInfo->SetTupleValue( contourId, &surfaceArea );
-
     perimeterInfo->SetTupleValue( contourId, &perimeter );
-
+    centerOfMassInfo->SetTupleValue( contourId, centerOfMass );
+    averageNormalInfo->SetTupleValue( contourId, averageNormal );
     }
 
   // VTK data has no associated transform, so Slicer assumes it is
