@@ -17,8 +17,7 @@
 =============================================================================*/
 
 // Local includes
-#include "MeasureCrossSectionsCLP.h"
-//#include "MeasureCrossSectionsConfig.h"
+#include "ComputeAirwayCrossSectionsCLP.h"
 
 #include <itkImageIOBase.h>
 #include <itkImage.h>
