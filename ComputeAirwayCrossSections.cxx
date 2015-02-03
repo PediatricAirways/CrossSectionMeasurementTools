@@ -35,8 +35,10 @@
 #include <vtkCutter.h>
 #include <vtkDataSetSurfaceFilter.h>
 #include <vtkDoubleArray.h>
+#include <vtkFeatureEdges.h>
 #include <vtkFieldData.h>
 #include <vtkGenericCell.h>
+#include <vtkLine.h>
 #include <vtkMassProperties.h>
 #include <vtkOctreePointLocator.h>
 #include <vtkPlane.h>
@@ -44,6 +46,7 @@
 #include <vtkPoints.h>
 #include <vtkPolyData.h>
 #include <vtkPolyDataConnectivityFilter.h>
+#include <vtkPolyLine.h>
 #include <vtkSmartPointer.h>
 #include <vtkStripper.h>
 #include <vtkTransform.h>
@@ -323,7 +326,6 @@ int DoIt( int argc, char* argv[], T )
 
     vtkSmartPointer<vtkAppendPolyData> crossSectionAppender =
       vtkSmartPointer<vtkAppendPolyData>::New();
-    double perimeter = 0.0;
     for ( vtkIdType cellId = 0; cellId < numCells; ++cellId )
       {
       vtkCell* polyLine = cut->GetCell( cellId ); // Assumes one cut object
@@ -364,24 +366,6 @@ int DoIt( int argc, char* argv[], T )
         }
 
       crossSectionAppender->AddInputConnection( triangulate->GetOutputPort() );
-
-      // Now compute the perimeter of this portion of the cross section.
-      // TODO - this should be for the perimeter of the planar cross section
-      vtkIdList* pointIds = polyLine->GetPointIds();
-      int numPolyLinePoints = pointIds->GetNumberOfIds();
-      if ( numPolyLinePoints > 1 )
-        {
-        for (vtkIdType i = 0; i < numPolyLinePoints; ++i)
-          {
-          vtkIdType ptId0 = pointIds->GetId( i );
-          vtkIdType ptId1 = pointIds->GetId( (i + 1) % numPolyLinePoints );
-          double pt0[3], pt1[3];
-          polygon->GetPoints()->GetPoint( ptId0, pt0 );
-          polygon->GetPoints()->GetPoint( ptId1, pt1 );
-
-          perimeter += sqrt( vtkMath::Distance2BetweenPoints( pt0, pt1 ) );
-          }
-        }
       }
 
     appender->AddInputConnection( crossSectionAppender->GetOutputPort() );
@@ -442,6 +426,55 @@ int DoIt( int argc, char* argv[], T )
     massProperties->Update();
     double surfaceArea = massProperties->GetSurfaceArea();
     std::cout << "mass properties sa: " << surfaceArea << ", " << totalArea << std::endl;
+
+    // Now compute the perimeter of this planar cross section.
+    double perimeter = 0.0;
+    vtkSmartPointer<vtkFeatureEdges> edges = vtkSmartPointer<vtkFeatureEdges>::New();
+    edges->BoundaryEdgesOn();
+    edges->FeatureEdgesOff();
+    edges->NonManifoldEdgesOff();
+    edges->ManifoldEdgesOff();
+    edges->ColoringOff();
+    edges->SetInputConnection( crossSectionAppender->GetOutputPort() );
+    edges->Update();
+
+    vtkPolyData* edgeOutput = edges->GetOutput();
+    for ( vtkIdType cellId = 0; cellId < edgeOutput->GetNumberOfCells(); ++cellId )
+      {
+      vtkCell* cell = edgeOutput->GetCell( cellId );
+      vtkLine* line = vtkLine::SafeDownCast( cell );
+      vtkPolyLine* polyLine = vtkPolyLine::SafeDownCast( cell );
+      if ( line )
+        {
+        vtkIdType ptId0 = line->GetPointId( 0 );
+        vtkIdType ptId1 = line->GetPointId( 1 );
+
+        double pt0[3], pt1[3];
+        edgeOutput->GetPoint( ptId0, pt0 );
+        edgeOutput->GetPoint( ptId1, pt1 );
+
+        perimeter += sqrt( vtkMath::Distance2BetweenPoints( pt0, pt1 ) );
+        }
+
+      if ( polyLine )
+        {
+        vtkIdList* pointIds = polyLine->GetPointIds();
+        int numPolyLinePoints = pointIds->GetNumberOfIds();
+        if ( numPolyLinePoints > 1 )
+          {
+          for (vtkIdType i = 0; i < numPolyLinePoints; ++i)
+            {
+            vtkIdType ptId0 = pointIds->GetId( i );
+            vtkIdType ptId1 = pointIds->GetId( (i + 1) % numPolyLinePoints );
+            double pt0[3], pt1[3];
+            edgeOutput->GetPoints()->GetPoint( ptId0, pt0 );
+            edgeOutput->GetPoints()->GetPoint( ptId1, pt1 );
+
+            perimeter += sqrt( vtkMath::Distance2BetweenPoints( pt0, pt1 ) );
+            }
+          }
+        }
+      }
 
     areaInfo->SetTupleValue( contourId, &surfaceArea );
     perimeterInfo->SetTupleValue( contourId, &perimeter );
