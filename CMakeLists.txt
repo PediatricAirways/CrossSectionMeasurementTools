@@ -44,10 +44,21 @@ target_link_libraries( TestCrossSectionMeasurement
   ${CrossSection_VTK_LIBRARIES}
 )
 
+### CLI module that computes 1000 cross sections through a heatflow image
 SEMMacroBuildCLI(
   NAME ComputeAirwayCrossSections
   ADDITIONAL_SRCS
     vtkContourAtPointsFilter.cxx
+  TARGET_LIBRARIES
+    ${ITK_LIBRARIES}
+    ${CrossSection_VTK_LIBRARIES}
+  EXECUTABLE_ONLY
+)
+
+### CLI module that extracts the cross sections closest to a set of query
+### points and saves them as a poly data.
+SEMMacroBuildCLI(
+  NAME ExtractCrossSections
   TARGET_LIBRARIES
     ${ITK_LIBRARIES}
     ${CrossSection_VTK_LIBRARIES}
