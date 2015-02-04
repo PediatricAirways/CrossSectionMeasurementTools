@@ -39,6 +39,7 @@
 #include <vtkPointData.h>
 #include <vtkPoints.h>
 #include <vtkPolyData.h>
+#include <vtkPolyDataReader.h>
 #include <vtkPolyLine.h>
 #include <vtkSmartPointer.h>
 #include <vtkStripper.h>
@@ -118,10 +119,34 @@ int DoIt( int argc, char* argv[], T )
   typename HeatFlowImageType::Pointer originalImage =
     heatFlowReader->GetOutput();
 
-  vtkSmartPointer<vtkXMLPolyDataReader> segmentationSurfaceReader =
-    vtkSmartPointer<vtkXMLPolyDataReader>::New();
-  segmentationSurfaceReader->SetFileName( segmentedSurface.c_str() );
-  segmentationSurfaceReader->Update();
+  vtkSmartPointer<vtkAlgorithm> reader;
+  std::string vtkExtension( ".vtk" );
+  std::string vtpExtension( ".vtp" );
+  if ( std::equal( vtkExtension.rbegin(), vtkExtension.rend(),
+                   segmentedSurface.rbegin() ) )
+    {
+    std::cout << "Reading VTK file\n";
+    vtkSmartPointer<vtkPolyDataReader> surfaceReader =
+      vtkSmartPointer<vtkPolyDataReader>::New();
+    surfaceReader->SetFileName( segmentedSurface.c_str() );
+    surfaceReader->Update();
+    reader = surfaceReader;
+    }
+  else if ( std::equal( vtpExtension.rbegin(), vtpExtension.rend(),
+                        segmentedSurface.rbegin() ) )
+    {
+    std::cout << "Reading VTP file\n";
+    vtkSmartPointer<vtkXMLPolyDataReader> surfaceReader =
+      vtkSmartPointer<vtkXMLPolyDataReader>::New();
+    surfaceReader->SetFileName( segmentedSurface.c_str() );
+    surfaceReader->Update();
+    reader = surfaceReader;
+    }
+  else
+    {
+    std::cerr << "Unknown file extension in file '" << segmentedSurface << "'. Exiting.\n";
+    return EXIT_FAILURE;
+    }
 
   // Slicer assumes poly data is in RAS space. We are operating in
   // LPS, so we need to convert the surface here.
@@ -132,7 +157,7 @@ int DoIt( int argc, char* argv[], T )
     vtkSmartPointer<vtkTransformFilter>::New();
   transformedSegmentationSurface->SetTransform( RASToLPSTransform );
   transformedSegmentationSurface->
-    SetInputConnection( segmentationSurfaceReader->GetOutputPort() );
+    SetInputConnection( reader->GetOutputPort() );
 
   // Input images are in LPS coordinate system while segmented surface
   // is in RAS. Do everything in LPS.
