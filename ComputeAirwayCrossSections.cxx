@@ -336,7 +336,7 @@ int DoIt( int argc, char* argv[], T )
 
       vtkPolyData* planarRegion = triangulate->GetOutput();
 
-      double dist2Threshold = 10.0 * 10.0;
+      double dist2Threshold = crossSectionDistanceThreshold * crossSectionDistanceThreshold;
       double minDist2ToContour = DBL_MAX;
       for ( vtkIdType cutPtId = 0; cutPtId < planarRegion->GetNumberOfPoints(); ++cutPtId )
         {

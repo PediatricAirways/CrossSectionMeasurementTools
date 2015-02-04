@@ -35,4 +35,16 @@
       <description><![CDATA[Output contours at sample points.]]></description>
     </geometry>
   </parameters>
+  <parameters advanced="true">
+    <label>Rarely Used Parameters</label>
+    <description><![CDATA[Rarely used parameters]]></description>
+    <double>
+      <name>crossSectionDistanceThreshold</name>
+      <label>Cross-section region distance threshold</label>
+      <longflag>--crossSectionDistanceThreshold</longflag>
+      <default>10.0</default>
+      <minimum>0.0</minimum>
+      <description><![CDATA[The threshold used to determine whether a planar cross-section region is to be considered part of the cross-section computed from the contour derived from the heat flow image. If the shortest distance from all points on the cross-section region is further from the contour than this threshold, it will not be considered part of the cross-section.]]></description>
+    </double>
+  </parameters>
 </executable>
