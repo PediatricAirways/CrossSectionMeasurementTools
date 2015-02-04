@@ -19,16 +19,11 @@
 // Local includes
 #include "ComputeAirwayCrossSectionsCLP.h"
 
-#include <itkImageIOBase.h>
 #include <itkImage.h>
 #include <itkImageFileReader.h>
 #include <itkImageToVTKImageFilter.h>
-#include <itkMinimumMaximumImageCalculator.h>
-#include <itkResampleImageFilter.h>
-#include <itkSpatialOrientationAdapter.h>
 
 #include <vtkAppendPolyData.h>
-#include <vtkBoundingBox.h>
 #include <vtkCellArray.h>
 #include <vtkCleanPolyData.h>
 #include <vtkContourFilter.h>
@@ -37,7 +32,6 @@
 #include <vtkDoubleArray.h>
 #include <vtkFeatureEdges.h>
 #include <vtkFieldData.h>
-#include <vtkGenericCell.h>
 #include <vtkLine.h>
 #include <vtkMassProperties.h>
 #include <vtkOctreePointLocator.h>
@@ -45,7 +39,6 @@
 #include <vtkPointData.h>
 #include <vtkPoints.h>
 #include <vtkPolyData.h>
-#include <vtkPolyDataConnectivityFilter.h>
 #include <vtkPolyLine.h>
 #include <vtkSmartPointer.h>
 #include <vtkStripper.h>
@@ -186,7 +179,7 @@ int DoIt( int argc, char* argv[], T )
   vtkUnstructuredGrid* thresholded = threshold->GetOutput();
 
   // Now create a set of 1000 contours along the heat flow image
-  int numContours = 100;
+  int numContours = 1000;
   vtkSmartPointer<vtkContourFilter> contourFilter =
     vtkSmartPointer<vtkContourFilter>::New();
   contourFilter->GenerateValues( numContours, 0.0, 1.0 );
@@ -241,7 +234,6 @@ int DoIt( int argc, char* argv[], T )
     // Center of mass of surface elements is the average of the
     // centers of the surface triangles weighted by the triangle area.
     vtkPolyData* pd = surfaceFilter->GetOutput();
-    vtkBoundingBox contourBB( pd->GetBounds() );
 
     vtkCellArray* ca = pd->GetPolys();
 
@@ -425,7 +417,6 @@ int DoIt( int argc, char* argv[], T )
     massProperties->SetInputConnection( crossSectionAppender->GetOutputPort() );
     massProperties->Update();
     double surfaceArea = massProperties->GetSurfaceArea();
-    std::cout << "mass properties sa: " << surfaceArea << ", " << totalArea << std::endl;
 
     // Now compute the perimeter of this planar cross section.
     double perimeter = 0.0;
@@ -509,7 +500,6 @@ int DoIt( int argc, char* argv[], T )
     vtkSmartPointer<vtkXMLPolyDataWriter>::New();
   pdWriter->SetFileName( outputCrossSections.c_str() );
   pdWriter->SetInputData( outputCopy );
-  //pdWriter->SetInputConnection( contourFilter->GetOutputPort() );
   pdWriter->Write();
 
   return returnValue;
