@@ -25,6 +25,7 @@
 
 #include <vtkAppendPolyData.h>
 #include <vtkCellArray.h>
+#include <vtkCellData.h>
 #include <vtkCleanPolyData.h>
 #include <vtkContourFilter.h>
 #include <vtkCutter.h>
@@ -204,7 +205,7 @@ int DoIt( int argc, char* argv[], T )
   vtkUnstructuredGrid* thresholded = threshold->GetOutput();
 
   // Now create a set of 1000 contours along the heat flow image
-  int numContours = 1000;
+  vtkIdType numContours = 1000;
   vtkSmartPointer<vtkContourFilter> contourFilter =
     vtkSmartPointer<vtkContourFilter>::New();
   contourFilter->GenerateValues( numContours, 0.0, 1.0 );
@@ -217,6 +218,11 @@ int DoIt( int argc, char* argv[], T )
   vtkSmartPointer<vtkDoubleArray> heatValues = vtkSmartPointer<vtkDoubleArray>::New();
   heatValues->SetName( "heat" );
   heatValues->SetNumberOfComponents( 1 );
+
+  // Cell data with contour ID
+  vtkSmartPointer<vtkIdTypeArray> contourIDs = vtkSmartPointer<vtkIdTypeArray>::New();
+  contourIDs->SetName( "contour ID" );
+  contourIDs->SetNumberOfComponents( 1 );
 
   // Field data containing meta data about the cross sections. One
   // entry for each cross-section is stored for each of the arrays
@@ -244,9 +250,9 @@ int DoIt( int argc, char* argv[], T )
   vtkSmartPointer<vtkAppendPolyData> appender =
     vtkSmartPointer<vtkAppendPolyData>::New();
 
-  for ( int contourId = 0; contourId < numContours; ++contourId )
+  for ( vtkIdType contourID = 0; contourID < numContours; ++contourID )
     {
-    double scalar = contourFilter->GetValue( contourId );
+    double scalar = contourFilter->GetValue( contourID );
 
     // Extract contour for the nearest scalar value
     vtkSmartPointer<vtkThreshold> scalarThreshold = vtkSmartPointer<vtkThreshold>::New();
@@ -344,8 +350,8 @@ int DoIt( int argc, char* argv[], T )
     if ( numCells == 0 )
       {
       double zero = 0.0;
-      areaInfo->SetTupleValue( contourId, &zero );
-      perimeterInfo->SetTupleValue( contourId, &zero );
+      areaInfo->SetTupleValue( contourID, &zero );
+      perimeterInfo->SetTupleValue( contourID, &zero );
       continue;
       }
 
@@ -401,6 +407,12 @@ int DoIt( int argc, char* argv[], T )
     for ( vtkIdType ptId = 0; ptId < pd->GetNumberOfPoints(); ++ptId )
       {
       heatValues->InsertNextTupleValue( &scalar );
+      }
+
+    // Add contour ID to cell array
+    for ( vtkIdType cellId = 0; cellId < pd->GetNumberOfCells(); ++cellId )
+      {
+      contourIDs->InsertNextTupleValue( &contourID );
       }
 
     // Now measure the surface area of the planar cross section
@@ -506,10 +518,10 @@ int DoIt( int argc, char* argv[], T )
         }
       }
 
-    areaInfo->SetTupleValue( contourId, &surfaceArea );
-    perimeterInfo->SetTupleValue( contourId, &perimeter );
-    centerOfMassInfo->SetTupleValue( contourId, centerOfMass );
-    averageNormalInfo->SetTupleValue( contourId, averageNormal );
+    areaInfo->SetTupleValue( contourID, &surfaceArea );
+    perimeterInfo->SetTupleValue( contourID, &perimeter );
+    centerOfMassInfo->SetTupleValue( contourID, centerOfMass );
+    averageNormalInfo->SetTupleValue( contourID, averageNormal );
     }
 
   // VTK data has no associated transform, so Slicer assumes it is
@@ -532,6 +544,10 @@ int DoIt( int argc, char* argv[], T )
   // Add the point data to the output
   vtkPointData* pointData = outputCopy->GetPointData();
   pointData->SetScalars( heatValues );
+
+  // Add the cell data to the output
+  vtkCellData* cellData = outputCopy->GetCellData();
+  cellData->SetScalars( contourIDs );
 
   // Add the field data to the output
   vtkFieldData* fieldData = outputCopy->GetFieldData();
