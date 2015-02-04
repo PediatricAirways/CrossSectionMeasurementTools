@@ -68,13 +68,69 @@ int main( int argc, char* argv[] )
 
   vtkPolyData* crossSectionsPD = crossSectionsReader->GetOutput();
 
+  vtkFieldData* inputFieldData = crossSectionsPD->GetFieldData();
+  vtkDoubleArray* inputCenterOfMassInfo =
+    vtkDoubleArray::SafeDownCast( inputFieldData->GetArray( "center of mass" ) );
+  if ( !inputCenterOfMassInfo )
+    {
+    std::cerr << "Input center of mass field data array is missing and won't be available in the output.\n";
+    }
+
+  vtkDoubleArray* inputAverageNormalInfo =
+    vtkDoubleArray::SafeDownCast( inputFieldData->GetArray( "normal" ) );
+  if ( !inputAverageNormalInfo )
+    {
+    std::cerr << "Input average normal field data array is missing and won't be available in the output.\n";
+    }
+
+  vtkDoubleArray* inputAreaInfo =
+    vtkDoubleArray::SafeDownCast( inputFieldData->GetArray( "area" ) );
+  if ( !inputAreaInfo )
+    {
+    std::cerr << "Input area field data array is missing and won't be available in the output.\n";
+    }
+
+  vtkDoubleArray* inputPerimeterInfo =
+    vtkDoubleArray::SafeDownCast( inputFieldData->GetArray( "perimeter" ) );
+  if ( !inputPerimeterInfo )
+    {
+    std::cerr << "Input perimeter field data array is missing and won't be available in the output.\n";
+    }
+
   // For each query point, find nearest cross section
   vtkSmartPointer<vtkCellLocator> cellLocator =
     vtkSmartPointer<vtkCellLocator>::New();
-  cellLocator->SetDataSet( crossSectionsReader->GetOutput() );
+  cellLocator->SetDataSet( crossSectionsPD );
   cellLocator->BuildLocator();
 
   size_t numQueryPoints = queryPoints.size();
+
+  // Field data containing meta data about the cross sections. One
+  // entry for each cross-section is stored for each of the arrays
+  // centerOfMassInfo, averageNormalInfo, areaInfo, and perimeterInfo.
+  vtkSmartPointer<vtkIdTypeArray> queryPtIDInfo = vtkSmartPointer<vtkIdTypeArray>::New();
+  queryPtIDInfo->SetName( "query point ID" );
+  queryPtIDInfo->SetNumberOfComponents( 1 );
+
+  vtkSmartPointer<vtkIdTypeArray> contourIDInfo = vtkSmartPointer<vtkIdTypeArray>::New();
+  contourIDInfo->SetName( "contour ID" );
+  contourIDInfo->SetNumberOfComponents( 1 );
+
+  vtkSmartPointer<vtkDoubleArray> centerOfMassInfo = vtkSmartPointer<vtkDoubleArray>::New();
+  centerOfMassInfo->SetName( "center of mass" );
+  centerOfMassInfo->SetNumberOfComponents( 3 );
+
+  vtkSmartPointer<vtkDoubleArray> averageNormalInfo = vtkSmartPointer<vtkDoubleArray>::New();
+  averageNormalInfo->SetName( "normal" );
+  averageNormalInfo->SetNumberOfComponents( 3 );
+
+  vtkSmartPointer<vtkDoubleArray> areaInfo = vtkSmartPointer<vtkDoubleArray>::New();
+  areaInfo->SetName( "area" );
+  areaInfo->SetNumberOfComponents( 1 );
+
+  vtkSmartPointer<vtkDoubleArray> perimeterInfo = vtkSmartPointer<vtkDoubleArray>::New();
+  perimeterInfo->SetName( "perimeter" );
+  perimeterInfo->SetNumberOfComponents( 1 );
 
   vtkSmartPointer<vtkAppendPolyData> appender =
     vtkSmartPointer<vtkAppendPolyData>::New();
@@ -90,7 +146,8 @@ int main( int argc, char* argv[] )
     double dist2;
     cellLocator->FindClosestPoint( queryPoint, closestPoint, cellID, subId, dist2 );
 
-    double dist2Threshold = 5.0 * 5.0; // mm. This might be too high.
+    double dist2Threshold = 2.0; // mm
+    dist2Threshold *= dist2Threshold;
     if ( cellID < 0 || dist2 > dist2Threshold )
       {
       continue;
@@ -113,12 +170,60 @@ int main( int argc, char* argv[] )
     surfaceFilter->SetInputConnection( scalarThreshold->GetOutputPort() );
 
     appender->AddInputConnection( surfaceFilter->GetOutputPort() );
+
+    // Add field data entries
+    vtkIdType queryPtID = static_cast<vtkIdType>( inputPtId );
+    queryPtIDInfo->InsertNextTupleValue( &queryPtID );
+
+    vtkIdType contourID = static_cast<vtkIdType>( nearestScalar );
+    contourIDInfo->InsertNextTupleValue( &contourID );
+
+    double tuple[3];
+    if ( inputCenterOfMassInfo )
+      {
+      inputCenterOfMassInfo->GetTupleValue( contourID, tuple );
+      centerOfMassInfo->InsertNextTupleValue( tuple );
+      }
+
+    if ( inputAverageNormalInfo )
+      {
+      inputAverageNormalInfo->GetTupleValue( contourID, tuple );
+      averageNormalInfo->InsertNextTupleValue( tuple );
+      }
+
+    if ( inputAreaInfo )
+      {
+      inputAreaInfo->GetTupleValue( contourID, tuple );
+      areaInfo->InsertNextTupleValue( tuple );
+      }
+
+    if ( inputAreaInfo )
+      {
+      inputPerimeterInfo->GetTupleValue( contourID, tuple );
+      perimeterInfo->InsertNextTupleValue( tuple );
+      }
     }
+
+  appender->Update();
+  vtkSmartPointer<vtkPointSet> outputCopy;
+  outputCopy.TakeReference( appender->GetOutput()->NewInstance() );
+  outputCopy->ShallowCopy( appender->GetOutput() );
+
+  // Add our field data
+  vtkSmartPointer<vtkFieldData> fieldData = vtkSmartPointer<vtkFieldData>::New();
+  fieldData->AddArray( queryPtIDInfo );
+  fieldData->AddArray( contourIDInfo );
+  fieldData->AddArray( centerOfMassInfo );
+  fieldData->AddArray( averageNormalInfo );
+  fieldData->AddArray( areaInfo );
+  fieldData->AddArray( perimeterInfo );
+
+  outputCopy->SetFieldData( fieldData );
 
   vtkSmartPointer<vtkXMLPolyDataWriter> pdWriter =
     vtkSmartPointer<vtkXMLPolyDataWriter>::New();
   pdWriter->SetFileName( extractedCrossSections.c_str() );
-  pdWriter->SetInputConnection( appender->GetOutputPort() );
+  pdWriter->SetInputData( outputCopy );
   pdWriter->Write();
 
   return returnValue;
