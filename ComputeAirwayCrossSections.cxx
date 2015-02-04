@@ -213,9 +213,17 @@ int DoIt( int argc, char* argv[], T )
 
   vtkPolyData* contours = contourFilter->GetOutput();
 
+  // Point data with heat flow values
+  vtkSmartPointer<vtkDoubleArray> heatValues = vtkSmartPointer<vtkDoubleArray>::New();
+  heatValues->SetName( "heat" );
+  heatValues->SetNumberOfComponents( 1 );
+
+  // Field data containing meta data about the cross sections. One
+  // entry for each cross-section is stored for each of the arrays
+  // centerOfMassInfo, averageNormalInfo, areaInfo, and perimeterInfo.
   vtkSmartPointer<vtkDoubleArray> centerOfMassInfo = vtkSmartPointer<vtkDoubleArray>::New();
   centerOfMassInfo->SetName( "center of mass" );
-  centerOfMassInfo->SetNumberOfComponents( 3);
+  centerOfMassInfo->SetNumberOfComponents( 3 );
   centerOfMassInfo->SetNumberOfTuples( numContours );
 
   vtkSmartPointer<vtkDoubleArray> averageNormalInfo = vtkSmartPointer<vtkDoubleArray>::New();
@@ -387,12 +395,18 @@ int DoIt( int argc, char* argv[], T )
 
     appender->AddInputConnection( crossSectionAppender->GetOutputPort() );
     crossSectionAppender->Update();
+    pd = crossSectionAppender->GetOutput();
+
+    // Add heat values to point array
+    for ( vtkIdType ptId = 0; ptId < pd->GetNumberOfPoints(); ++ptId )
+      {
+      heatValues->InsertNextTupleValue( &scalar );
+      }
 
     // Now measure the surface area of the planar cross section
     totalArea = 0.0;
     centerOfMass[0] = centerOfMass[1] = centerOfMass[2] = 0.0;
     averageNormal[0] = averageNormal[1] = averageNormal[2] = 0.0;
-    pd = crossSectionAppender->GetOutput();
     ca = pd->GetPolys();
     ca->InitTraversal();
     while ( ca->GetNextCell( ptList ) )
@@ -514,11 +528,17 @@ int DoIt( int argc, char* argv[], T )
   vtkSmartPointer<vtkPointSet> outputCopy;
   outputCopy.TakeReference( transformFilter->GetOutput()->NewInstance() );
   outputCopy->ShallowCopy( transformFilter->GetOutput() );
-  vtkFieldData* fd = outputCopy->GetFieldData();
-  fd->AddArray( centerOfMassInfo );
-  fd->AddArray( averageNormalInfo );
-  fd->AddArray( areaInfo );
-  fd->AddArray( perimeterInfo );
+
+  // Add the point data to the output
+  vtkPointData* pointData = outputCopy->GetPointData();
+  pointData->SetScalars( heatValues );
+
+  // Add the field data to the output
+  vtkFieldData* fieldData = outputCopy->GetFieldData();
+  fieldData->AddArray( centerOfMassInfo );
+  fieldData->AddArray( averageNormalInfo );
+  fieldData->AddArray( areaInfo );
+  fieldData->AddArray( perimeterInfo );
 
   // Write contours
   vtkSmartPointer<vtkXMLPolyDataWriter> pdWriter =
