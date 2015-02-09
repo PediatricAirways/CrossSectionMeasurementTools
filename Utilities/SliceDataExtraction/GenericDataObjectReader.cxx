@@ -37,11 +37,11 @@ int main ( int argc, char *argv[] )
 
  for (int i = 0; i < polydata->GetFieldData()->GetArray("area")->GetSize(); ++i)
  {
-   myfile << polydata->GetFieldData()->GetArray("center of mass")->GetTuple(i)[0]<< ", " << 
-                polydata->GetFieldData()->GetArray("center of mass")->GetTuple(i)[1]<< ", " << 
-                polydata->GetFieldData()->GetArray("center of mass")->GetTuple(i)[2]<< ", " << 
-                polydata->GetFieldData()->GetArray("area")->GetTuple(i)[0]<< ", " <<
-                polydata->GetFieldData()->GetArray("perimeter")->GetTuple(i)[0]<< std::endl;
+   myfile << polydata->GetFieldData()->GetArray("area")->GetTuple(i)[0]<< ", " <<
+                polydata->GetFieldData()->GetArray("perimeter")->GetTuple(i)[0]<<  ", " << 
+                polydata->GetFieldData()->GetArray("center of mass")->GetTuple(i)[0]<< " " << 
+                polydata->GetFieldData()->GetArray("center of mass")->GetTuple(i)[1]<< " " << 
+                polydata->GetFieldData()->GetArray("center of mass")->GetTuple(i)[2]<<std::endl;
 
  }
  myfile.close();
