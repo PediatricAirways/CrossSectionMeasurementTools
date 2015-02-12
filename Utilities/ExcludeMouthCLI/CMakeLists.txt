@@ -10,8 +10,8 @@ set( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
   )
 
 # Include ITK
-find_package( ITK REQUIRED )
-include( ${ITK_USE_FILE} )
+find_package( Slicer REQUIRED )
+include( ${Slicer_USE_FILE} )
 
 
 add_executable( ExcludeSphereImageFilterTest ExcludeSphereImageFilterTest.cxx )
