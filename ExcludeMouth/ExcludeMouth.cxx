@@ -17,10 +17,10 @@
 
 #include "itkImageFileWriter.h"
 #include "itkImageFileReader.h"
-#include "../../../../../Slicer/Base/CLI/itkPluginUtilities.h"
+#include "../../Slicer/Base/CLI/itkPluginUtilities.h"
 
-#include "../itkExcludeSphereImageFilter.h"
-#include "ExcludeSphereCLP.h"
+#include "itkExcludeSphereImageFilter.h"
+#include "ExcludeMouthCLP.h"
 
 // Use an anonymous namespace to keep class types and function names
 // from colliding when module is used as shared object module.  Every
