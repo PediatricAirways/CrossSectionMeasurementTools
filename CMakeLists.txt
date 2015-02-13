@@ -3,66 +3,11 @@ cmake_minimum_required(VERSION 2.8)
 
 unset(PYTHON_EXECUTABLE CACHE)
 
-find_package(Slicer REQUIRED)
-include(${Slicer_USE_FILE})
-
 find_package(SlicerExecutionModel REQUIRED)
 include(${SlicerExecutionModel_USE_FILE})
 
-# Include ITK
-include(${ITK_USE_FILE})
+set(MODULE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# Include VTK
-find_package( VTK REQUIRED )
-vtk_module_config(CrossSection_VTK
-  vtkRenderingOpenGL
-  vtkInteractionStyle
-  vtkRenderingVolumeOpenGL
-  vtkRenderingFreeTypeOpenGL
-  vtkFiltersGeneral
-  vtkIOXML
-  vtkImagingCore
-)
-
-# Add VTK
-include_directories(${CrossSection_VTK_INCLUDE_DIRS})
-
-# Slicer doesn't enable ITK's VtkGlue module, so we add the include
-# directory manually here.
-load_cache( "${ITK_DIR}" ITK_SOURCE_DIR )
-include_directories( ${ITK_SOURCE_DIR}/Modules/Bridge/VtkGlue/include )
-
-# Add preprocessor definitions needed to use VTK.
-set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS ${CrossSection_VTK_DEFINITIONS})
-
-add_executable( TestCrossSectionMeasurement
-  TestCrossSectionMeasurement.cxx
-  vtkContourAtPointsFilter.cxx
-)
-target_link_libraries( TestCrossSectionMeasurement
-  ${ITK_LIBRARIES}
-  ${CrossSection_VTK_LIBRARIES}
-)
-
-### CLI module that computes 1000 cross sections through a heatflow image
-SEMMacroBuildCLI(
-  NAME ComputeAirwayCrossSections
-  ADDITIONAL_SRCS
-    vtkContourAtPointsFilter.cxx
-  TARGET_LIBRARIES
-    ${ITK_LIBRARIES}
-    ${CrossSection_VTK_LIBRARIES}
-  EXECUTABLE_ONLY
-)
-
-### CLI module that extracts the cross sections closest to a set of query
-### points and saves them as a poly data.
-SEMMacroBuildCLI(
-  NAME ExtractCrossSections
-  TARGET_LIBRARIES
-    ${ITK_LIBRARIES}
-    ${CrossSection_VTK_LIBRARIES}
-  EXECUTABLE_ONLY
-)
-
-add_definitions( -D_SCL_SECURE_NO_WARNINGS )
+add_subdirectory(ComputeAirwayCrossSections)
+add_subdirectory(ExcludeMouth)
+add_subdirectory(ExtractCrossSections)
