@@ -2,8 +2,8 @@
 #define itkAirwayLaplaceSolutionFilter_hxx_included
 
 #include "itkAirwayLaplaceSolutionFilter.h"
-#include "Boundary/itkAirwayLaplaceBoundaryImageFilter.h"
-#include "Solver/itkLaplaceEquationSolverImageFilter.h"
+#include "itkAirwayLaplaceBoundaryImageFilter.h"
+#include "itkLaplaceEquationSolverImageFilter.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include <itkInvertIntensityImageFilter.h>
 #include <itkBinaryContourImageFilter.h>

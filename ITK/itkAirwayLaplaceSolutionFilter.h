@@ -3,8 +3,9 @@
 
 #include <itkImageToImageFilter.h>
 #include <itkPoint.h>
-#include "Boundary/itkAirwayLaplaceBoundaryImageFilter.h"
-#include "Solver/itkLaplaceEquationSolverImageFilter.h"
+
+#include "itkAirwayLaplaceBoundaryImageFilter.h"
+#include "itkLaplaceEquationSolverImageFilter.h"
 
 
 

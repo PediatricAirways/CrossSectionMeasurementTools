@@ -19,7 +19,7 @@
 #include "itkImageFileReader.h"
 #include "../../Slicer/Base/CLI/itkPluginUtilities.h"
 
-#include "../itkAirwayLaplaceSolutionFilter.h"
+#include "itkAirwayLaplaceSolutionFilter.h"
 #include "AirwayLaplaceSolutionFilterCLP.h"
 
 // Use an anonymous namespace to keep class types and function names

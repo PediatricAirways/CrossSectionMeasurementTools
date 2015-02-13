@@ -1,13 +1,15 @@
-project(itkHeatFlow)
+project(LaplaceSolution)
 cmake_minimum_required(VERSION 2.8)
 
-set( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
-  "${CMAKE_CURRENT_SOURCE_DIR}/CMake"
-  )
+find_package(SlicerExecutionModel REQUIRED)
+include(${SlicerExecutionModel_USE_FILE})
 
-# Include ITK
-find_package( ITK REQUIRED )
-include( ${ITK_USE_FILE} )
+find_package(ITK 4.7
+  COMPONENTS
+    ITKIOImageBase
+    ITKVTK
+ REQUIRED)
+include(${ITK_USE_FILE})
 
 # Include Eigen3
 find_package( Eigen3 REQUIRED )

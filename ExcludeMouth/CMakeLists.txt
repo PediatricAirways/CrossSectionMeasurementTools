@@ -1,6 +1,8 @@
 project(ExcludeSphereImageFilterTest)
 cmake_minimum_required(VERSION 2.8)
 
+set(MODULE_NAME ExcludeSphereImageFilter)
+
 find_package(SlicerExecutionModel REQUIRED)
 include(${SlicerExecutionModel_USE_FILE})
 
