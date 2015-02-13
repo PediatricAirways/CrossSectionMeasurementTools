@@ -1,0 +1,25 @@
+This folder contains the filter to take an airway, the nostril plane, and the
+trachea chorina plane and produce the boundary conditions for the Laplace
+equation. This Will be used to segment the airways into iso-therms that and then
+cross-sections for the pediatric airways project. The specifics for this filter
+are listed below.
+
+
+Goal: produce ITK filter that creates a boundary condition image suitable for the 
+itkLaplaceEquationSolverImageFilter
+
+Input:
+	* Binary image where non-zero value marks a segmented object, such as an airway, 
+		and zero value marks background
+	* Definition of plane used to mark the nostrils
+	* Definition of plane used to mark bottom plane of the airway
+
+Output: 
+	* Image containing boundary condition labels
+	* Solution index: 11 (interior of airway)
+	* Nostril boundary condition: 5
+	* Trachea carina boundary condition :4
+	* Neumann boundary condition (sides of airway) : 6
+
+If you want to make the CLI plugin for Slicer you need to edit the AirwayLaplaceBoundaryFilter.cxx file.
+The final #include declaration needs to refrence the location where you build the the plugin.

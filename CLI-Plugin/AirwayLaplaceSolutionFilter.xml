@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<executable>
+  <category>Filtering</category>
+  <title>Airway Laplace Solution Filter</title>
+  <description>
+    <![CDATA[Takes a Airway Segment and Calculates the Laplace Solution for that airway]]>
+  </description>
+  <contributor>Schuyler Kylstra (Kitware)</contributor>
+
+  <parameters>
+    <label>I/O</label>
+    <description>The input image and output image files</description>
+    <image>
+      <name>inputImage</name>
+      <label>Input image</label>
+      <longflag>--input</longflag>
+      <channel>input</channel>
+      <default>None</default>
+      <description><![CDATA[Input image to be segmented.]]></description>
+    </image>
+    <image>
+      <name>outputImage</name>
+      <label>Output image</label>
+      <channel>output</channel>
+      <longflag>--output</longflag>
+      <default>None</default>
+      <description><![CDATA[Segmented output image.]]></description>
+    </image>
+  </parameters>
+
+  <parameters>
+    <label>Nose Parameters</label>
+    <description>
+      The point and normal that describes the nasal plane
+    </description>	
+
+    <point multiple="false" coordinateSystem="lps">
+      <name>NasalPoint</name>
+      <longflag>--nasalPoint</longflag>
+      <description>The point to define the nasal plane</description>
+      <label>Nasal Point</label>
+      <default>0,0,0</default>
+    </point>
+
+    <point multiple="false" coordinateSystem="lps">
+      <name>NasalVectorHead</name>
+      <longflag>--nasalVectorHead</longflag>
+      <description>The point to define the normal of the nasal plane relative to the nasal point </description>
+      <label>Nasal Vector Head</label>
+      <default>0,0,0</default>
+    </point>
+  </parameters>
+
+  <parameters>
+    <label>Trachea Parameters</label>
+    <description>
+      The point and normal that describes the tracheal plane
+    </description>
+
+    <point multiple="false" coordinateSystem="lps">
+      <name>TrachealPoint</name>
+      <longflag>--trachealPoint</longflag>
+      <description>The point to define the tracheal plane</description>
+      <label>Tracheal Point</label>
+      <default>0,0,0</default>
+    </point>
+
+    <point multiple="false" coordinateSystem="lps">
+      <name>TrachealVectorHead</name>
+      <longflag>--tracheaVectorHead</longflag>
+      <description>The point to define the normal of the trachea plane relative to the trachea point</description>
+      <label>Tracheal Vector Head</label>
+      <default>0,0,0</default>
+    </point>
+  </parameters>
+</executable>
