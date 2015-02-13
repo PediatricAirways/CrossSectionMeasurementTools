@@ -19,14 +19,6 @@
 // Local includes
 #include "ExtractCrossSectionsCLP.h"
 
-#include <itkImageIOBase.h>
-#include <itkImage.h>
-#include <itkImageFileReader.h>
-#include <itkImageToVTKImageFilter.h>
-#include <itkMinimumMaximumImageCalculator.h>
-#include <itkResampleImageFilter.h>
-#include <itkSpatialOrientationAdapter.h>
-
 #include <vtkAppendPolyData.h>
 #include <vtkCellArray.h>
 #include <vtkCellData.h>

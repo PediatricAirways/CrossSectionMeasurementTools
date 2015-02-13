@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<executable>
+  <category>Filtering</category>
+  <title>Compute Cross Sections</title>
+  <description><![CDATA[Measures cross section areas from airway data.]]></description>
+  <version>1.0</version>
+  <documentation-url>TODO</documentation-url>
+  <license>Apache 2.0</license>
+  <contributor>Cory Quammen</contributor>
+  <acknowledgements><![CDATA[TODO]]></acknowledgements>
+  <parameters>
+    <label>Input/Output</label>
+    <description><![CDATA[Input/Output Parameters]]></description>
+    <image>
+      <name>heatFlowImage</name>
+      <label>Heat flow image</label>
+      <channel>input</channel>
+      <index>0</index>
+      <default>None</default>
+      <description><![CDATA[Input heat flow image from segmentation.]]></description>
+    </image>
+    <geometry>
+      <name>segmentedSurface</name>
+      <label>Segmented model</label>
+      <channel>input</channel>
+      <index>1</index>
+      <default>None</default>
+      <description><![CDATA[Smooth surface geometry from the segmentation process.]]></description>
+    </geometry>
+    <geometry>
+      <name>outputCrossSections</name>
+      <label>Output cross sections</label>
+      <channel>output</channel>
+      <index>2</index>
+      <description><![CDATA[Output contours at sample points.]]></description>
+    </geometry>
+  </parameters>
+  <parameters advanced="true">
+    <label>Rarely Used Parameters</label>
+    <description><![CDATA[Rarely used parameters]]></description>
+    <double>
+      <name>crossSectionDistanceThreshold</name>
+      <label>Cross-section region distance threshold</label>
+      <longflag>--crossSectionDistanceThreshold</longflag>
+      <default>10.0</default>
+      <minimum>0.0</minimum>
+      <description><![CDATA[The threshold used to determine whether a planar cross-section region is to be considered part of the cross-section computed from the contour derived from the heat flow image. If the shortest distance from all points on the cross-section region is further from the contour than this threshold, it will not be considered part of the cross-section.]]></description>
+    </double>
+  </parameters>
+</executable>
