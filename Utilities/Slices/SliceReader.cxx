@@ -37,7 +37,7 @@ int main ( int argc, char *argv[] )
 
 
   myfile << polydata->GetFieldData()->GetArray("contour ID")->GetTuple(0)[0]<<std::endl; //TVC
-  myfile << polydata->GetFieldData()->GetArray("contour ID")->GetTuple(1)[0]<<std::endl; //Subglottic
+  myfile << polydata->GetFieldData()->GetArray("contour ID")->GetTuple(2)[0]<<std::endl; //Inferrior Subglottis
   myfile << polydata->GetFieldData()->GetArray("contour ID")->GetTuple(3)[0]<<std::endl; //Trachea Carina
   myfile.close();
  

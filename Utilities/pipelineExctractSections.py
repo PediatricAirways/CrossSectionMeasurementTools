@@ -43,11 +43,20 @@ def callFilter(args, R, D):
 	inf = "--queryPoints " + str(args[2][0]) + "," + str(args[2][1]) + "," + str(args[2][2])
 	tc = "--queryPoints " + str(args[3][0]) + "," + str(args[3][1]) + "," + str(args[3][2])
 
-
-	try:
-		sub.call( ["./ExtractCrossSections", tvc, subg, inf, tc, IN_PATH, OUT_PATH])
-	except Exception, e:
-		print e
+	if len(args) == 4:
+		try:
+			sub.call( ["./ExtractCrossSections", tvc, subg, inf, tc, IN_PATH, OUT_PATH])
+		except Exception, e:
+			print e
+	else:
+		mp = "--queryPoints " + str(-args[4][0]) + "," + str(-args[4][1]) + "," + str(args[4][2])
+		mt = "--queryPoints " + str(-args[5][0]) + "," + str(-args[5][1]) + "," + str(args[5][2])
+		print args
+		try:
+			sub.call( ["./ExtractCrossSections", tvc, subg, inf, tc, mp, mt, IN_PATH, OUT_PATH])
+		except Exception, e:
+			print e
+	
 
 
 
@@ -150,6 +159,9 @@ def PlaceMinXASlice(inds, ROOT, DIR, outfile):
 			ind = i + inds[0] 
 			l = ll
 	outfile.write( ', ' + str(ind) + ', ' + l[:-1] )
+	com = l.split(',')[2].split(' ')
+	com = [float(com[1]), float(com[2]), float(com[3][:-1])]
+	return com
 	
 
 def PlaceMidTracheaSlice(inds, ROOT, DIR, outfile):
@@ -203,6 +215,9 @@ def PlaceMidTracheaSlice(inds, ROOT, DIR, outfile):
 	l = lines[start + index]
 	l = ', ' + l
 	outfile.write(l)
+	com = l.split(',')[3].split(' ')
+	com = [ float(com[1]), float(com[2]), float(com[3][:-1]) ]
+	return com
 
 
 
@@ -211,11 +226,11 @@ def PlaceMidTracheaSlice(inds, ROOT, DIR, outfile):
 ROOT='/Users/jonathankylstra/DATA'
 dirs = ['1019','1092','1031','1048','1061','1005','1079','1052','1094','1086','1073','1059','1043','1089','1046','1062','1098','1035','1078','1102','1010','1036','1041','1032','1063','1097','1058','1108','1067','1095','1069','1044','1090','1045','1053','1049','1057','1077','1088','1101','1004','1085','1103','1042','1047','1065','1071','1100']
 d = "data.csv"
-Y = ['1061']
+Y = ['1092', '1100', '1052', '1103', '1108', '1057', '1041', '1090']
 x = open(os.path.join(ROOT, d), 'w')
 x.write("ScanID, TVC_XA, TVC_PER, TVC_COM , Subglottic_XA, Subglottic_PER, Subglottic_COM , InfSub_XA, InfSub_PER, InfSub_COM , MinSliceID, MinSlice_XA, MinSlice_PER, MinSlice_COM, MidT_XA, MidT_PER, MidT_COM \n")
 for DIR in dirs: 
-	# print DIR
+	print DIR
 	s = DIR + "_LANDMARKS.txt"
 	try:
 		
@@ -223,21 +238,24 @@ for DIR in dirs:
 		# f = open(os.path.join(ROOT, DIR, s), 'a')
 		# extendLandmarks(DIR, f)
 		# f.close()
-		# f = open( os.path.join(ROOT, DIR, s), 'r' )
-		# args = extractArgs(f)
-		# callFilter(args, ROOT, DIR)
-		# extractALLData(ROOT, DIR)
+		f = open( os.path.join(ROOT, DIR, s), 'r' )
+		args = extractArgs(f)
+		callFilter(args, ROOT, DIR)
+		extractALLData(ROOT, DIR)
 		extractData(ROOT, DIR, x)
 		inds = GetSliceIndices(ROOT, DIR)
 		if len(inds) > 0:
-			print DIR
-			PlaceMinXASlice(inds, ROOT, DIR, x)
-			PlaceMidTracheaSlice(inds, ROOT, DIR, x)
+
+			args.append( PlaceMinXASlice(inds, ROOT, DIR, x) )
+			args.append( PlaceMidTracheaSlice(inds, ROOT, DIR, x) )
+
+			callFilter(args, ROOT, DIR)
 
 
 		
 
 	except Exception, e:
+		print DIR
 		print e
 		continue
 

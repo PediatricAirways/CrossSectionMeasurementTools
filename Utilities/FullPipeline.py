@@ -3,9 +3,15 @@ import subprocess as sub
 import plumbum
 
 
+###########
+#  THIS IS NOT DONE YET!!!!
+###########
+
+
 
 def copyNeededFiles( ROOT, DIR ):
 	
+	r = plumbum.machines.ssh_machine.SshMachine("10.171.2.221", user="schuyler")
 
 	fro = r.path( '/home/cory/Projects/AirwaySegmenter-files/CRL/' + DIR + "/" + DIR + "_OUTPUT.vtk" )
 	to = plumbum.local.path(ROOT + DIR + '/' + DIR + '_OUTPUT.vtk' )
@@ -13,12 +19,13 @@ def copyNeededFiles( ROOT, DIR ):
 	fro1 = r.path('/home/cory/Projects/AirwaySegmenter-files/CRL/' + DIR + "/" + DIR + '_OUTPUT.vtp')
 	to1 = plumbum.local.path(ROOT + DIR + '/' + DIR + '_OUTPUT.vtp')
 	
-	fro1 = r.path('/home/cory/Projects/AirwaySegmenter-files/CRL/' + DIR + "/" + DIR + '_LANDMARKS.txt')
-	to1 = plumbum.local.path(ROOT + DIR + '/' + DIR + '_LANDMARKS.txt')
+	fro2 = r.path('/home/cory/Projects/AirwaySegmenter-files/CRL/' + DIR + "/" + DIR + '_LANDMARKS.txt')
+	to2 = plumbum.local.path(ROOT + DIR + '/' + DIR + '_LANDMARKS.txt')
 	
 	try:
 		plumbum.path.utils.copy(fro, to)
 		plumbum.path.utils.copy(fro1, to1)
+		plumbum.path.utils.copy(fro2, to2)
 	except Exception, e:
 		print e
 
