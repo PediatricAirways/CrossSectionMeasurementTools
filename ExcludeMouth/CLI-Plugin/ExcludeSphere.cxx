@@ -17,9 +17,9 @@
 
 #include "itkImageFileWriter.h"
 #include "itkImageFileReader.h"
-#include "../../../../../Slicer/Base/CLI/itkPluginUtilities.h"
+#include "../../../Slicer/Base/CLI/itkPluginUtilities.h"
 
-#include "../itkExcludeSphereImageFilter.h"
+#include "../../ITK/itkExcludeSphereImageFilter.h"
 #include "ExcludeSphereCLP.h"
 
 // Use an anonymous namespace to keep class types and function names
@@ -69,7 +69,7 @@ int DoIt( int argc, char * argv[], T )
 
   // Setup the boundary method
   exclude->SetInput(  reader->GetOutput() );
-
+  exclude->Update();
   // Write the output
   writer->SetInput( exclude->GetOutput() );
   writer->Update();
