@@ -17,9 +17,9 @@
 
 #include "itkImageFileWriter.h"
 #include "itkImageFileReader.h"
-#include "../../../Slicer/Base/CLI/itkPluginUtilities.h"
+#include "../../Slicer/Base/CLI/itkPluginUtilities.h"
 
-#include "../../ITK/itkExcludeSphereImageFilter.h"
+#include "../ITK/itkExcludeSphereImageFilter.h"
 #include "ExcludeSphereCLP.h"
 
 // Use an anonymous namespace to keep class types and function names
