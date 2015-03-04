@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<executable>
+  <category>Filtering</category>
+  <title>Convert Model To Image</title>
+  <description>
+    <![CDATA[Converts a poly data model to an image. Uses a reference image to determine the output image parameters such as size, origin, and voxel spacing.]]>
+  </description>
+  <contributor>Cory Quammen</contributor>
+
+  <parameters>
+    <label>I/O</label>
+    <description>The input model and reference image</description>
+    <geometry>
+      <name>inputModel</name>
+      <label>Input model</label>
+      <longflag>--inputModel</longflag>
+      <channel>input</channel>
+      <default>None</default>
+      <description><![CDATA[Input model to be converted to image.]]></description>
+    </geometry>
+    <image>
+      <name>referenceImage</name>
+      <label>Reference image</label>
+      <longflag>--referenceImage</longflag>
+      <channel>input</channel>
+      <default>None</default>
+      <description><![CDATA[Reference image from which output image size, origin, and spacing are taken.]]></description>
+    </image>
+    <image>
+      <name>outputImage</name>
+      <label>Output image</label>
+      <longflag>--outputImage</longflag>
+      <channel>output</channel>
+      <default>None</default>
+      <description><![CDATA[Output image]]></description>
+    </image>
+  </parameters>
+
+  <parameters>
+    <label>Labeling Parameters</label>
+    <description>
+      <![CDATA[Parameters used to control the labeling of output voxels.]]>
+    </description>
+
+    <double>
+      <name>interiorValue</name>
+      <label>Interior value</label>
+      <longflag>--interiorValue</longflag>
+      <description><![CDATA[Value used to mark the inside of the geometry.]]></description>
+      <default>1</default>
+    </double>
+
+    <double>
+      <name>exteriorValue</name>
+      <label>Exterior value</label>
+      <longflag>--exteriorValue</longflag>
+      <description><![CDATA[Value used to mark the outside of the geometry.]]></description>
+      <default>0</default>
+    </double>
+    
+  </parameters>
+
+</executable>
+
