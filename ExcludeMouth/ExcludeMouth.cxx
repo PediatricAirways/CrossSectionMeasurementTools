@@ -38,10 +38,10 @@ int DoIt( int argc, char * argv[], T )
   const unsigned int Dimension = 3;
 
   typedef T InputPixelType;
-  typedef itk::Image< InputPixelType, 3 >      ImageType;
-  typedef itk::ImageFileReader< ImageType >    ReaderType;
-  typedef itk::ImageFileWriter< ImageType >    WriterType;
-  typedef typename ImageType::PointType        PointType;
+  typedef itk::Image< InputPixelType, Dimension > ImageType;
+  typedef itk::ImageFileReader< ImageType >       ReaderType;
+  typedef itk::ImageFileWriter< ImageType >       WriterType;
+  typedef typename ImageType::PointType           PointType;
 
   // define the filter
   typedef itk::ExcludeSphereImageFilter< ImageType >  ExcludeFilterType;

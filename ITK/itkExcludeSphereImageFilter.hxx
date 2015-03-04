@@ -19,7 +19,7 @@ ExcludeSphereImageFilter<ImageType>::ExcludeSphereImageFilter()
  
 template<class ImageType>
 void ExcludeSphereImageFilter<ImageType>
-::ThreadedGenerateData(const OutputImageRegionType& outputRegionForThread, ThreadIdType threadId)
+::ThreadedGenerateData(const OutputImageRegionType& outputRegionForThread, ThreadIdType itkNotUsed(threadId))
 {
   typename ImageType::ConstPointer input = this->GetInput();
   typename ImageType::Pointer output = this->GetOutput();
