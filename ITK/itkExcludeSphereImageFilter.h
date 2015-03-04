@@ -1,5 +1,5 @@
-#ifndef __itkExcludeSphereImageFilter_h
-#define __itkExcludeSphereImageFilter_h
+#ifndef itkExcludeSphereImageFilter_h_included
+#define itkExcludeSphereImageFilter_h_included
  
 #include "itkImageToImageFilter.h"
  
@@ -53,4 +53,4 @@ private:
 #include "itkExcludeSphereImageFilter.hxx"
 #endif
  
-#endif // __itkExcludeSphereImageFilter_h
+#endif // itkExcludeSphereImageFilter_h_included

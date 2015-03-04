@@ -1,17 +1,19 @@
-#ifndef __itkExcludeSphereImageFilter_hxx
-#define __itkExcludeSphereImageFilter_hxx
+#ifndef itkExcludeSphereImageFilter_hxx_included
+#define itkExcludeSphereImageFilter_hxx_included
  
 #include "itkExcludeSphereImageFilter.h"
 #include "itkObjectFactory.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkImageRegionConstIteratorWithIndex.h"
 #include "itkImage.h"
+
 #include <cstdio>
  
 namespace itk
 {
 template<class ImageType>
-ExcludeSphereImageFilter<ImageType>::ExcludeSphereImageFilter()
+ExcludeSphereImageFilter<ImageType>
+::ExcludeSphereImageFilter()
 {
   this->m_SphereRadius = 0.0;
 }
@@ -39,7 +41,6 @@ void ExcludeSphereImageFilter<ImageType>
   while(!out.IsAtEnd())
   {
     voxelValue = it.Value();
-    // std::cout << voxelValue << std::endl;
     input->TransformIndexToPhysicalPoint( it.GetIndex() , voxelPoint );
     dist = 0;
     for( unsigned int i = 0; i < ImageType::ImageDimension; ++i)
@@ -49,7 +50,6 @@ void ExcludeSphereImageFilter<ImageType>
 
     if (dist < Radius2)
     {
-      // std::cout << "HERERERERER" << std::endl;
       voxelValue = 0;
     }
 
@@ -63,4 +63,4 @@ void ExcludeSphereImageFilter<ImageType>
  
 }// end namespace
  
-#endif //__itkExcludeSphereImageFilter_txx
+#endif //itkExcludeSphereImageFilter_hxx_included
