@@ -9,8 +9,11 @@
 #include <itkVTKImageToImageFilter.h>
 
 #include <vtkImageStencilToImage.h>
+#include <vtkPolyData.h>
 #include <vtkPolyDataToImageStencil.h>
 #include <vtkSmartPointer.h>
+#include <vtkTransform.h>
+#include <vtkTransformFilter.h>
 #include <vtkXMLImageDataWriter.h>
 #include <vtkXMLPolyDataReader.h>
 
@@ -77,6 +80,13 @@ int GetReferenceInfo( const char* fileName, int extent[6], double origin[3], dou
     spacing[i]      = inputSpacing[i];
     }
 
+  for ( int i = 0; i < 3; ++i )
+    {
+    std::cout << "(" << origin[i] << ", "
+              << (origin[i] + (inputSize[i]-1)*inputSpacing[i]) << "), ";
+    }
+  std::cout << "\n";
+
   return EXIT_SUCCESS;
 }
 
@@ -86,11 +96,6 @@ int GetReferenceInfo( const char* fileName, int extent[6], double origin[3], dou
 int main( int argc, char* argv[] )
 {
   PARSE_ARGS;
-
-  // Read model
-  vtkSmartPointer<vtkXMLPolyDataReader> modelReader =
-    vtkSmartPointer<vtkXMLPolyDataReader>::New();
-  modelReader->SetFileName( inputModel.c_str() );
 
   itk::ImageIOBase::IOPixelType     pixelType;
   itk::ImageIOBase::IOComponentType componentType;
@@ -167,6 +172,30 @@ int main( int argc, char* argv[] )
     return result;
     }
 
+  // Read model
+  vtkSmartPointer<vtkXMLPolyDataReader> modelReader =
+    vtkSmartPointer<vtkXMLPolyDataReader>::New();
+  modelReader->SetFileName( inputModel.c_str() );
+
+  // Slicer assumes poly data is in RAS space. We are operating in
+  // LPS, so we need to convert the surface here.
+  vtkSmartPointer<vtkTransform> RASToLPSTransform  =
+    vtkSmartPointer<vtkTransform>::New();
+  RASToLPSTransform->Scale( -1.0, -1.0, 1.0 );
+
+  vtkSmartPointer<vtkTransformFilter> transformedModel =
+    vtkSmartPointer<vtkTransformFilter>::New();
+  transformedModel->SetTransform( RASToLPSTransform );
+  transformedModel->SetInputConnection( modelReader->GetOutputPort() );
+  transformedModel->Update();
+
+  double bounds[6];
+  transformedModel->GetOutput()->GetBounds(bounds);
+  std::cout << "bounds: "
+            << bounds[0] << ", " << bounds[1] << ", "
+            << bounds[2] << ", " << bounds[3] << ", "
+            << bounds[4] << ", " << bounds[5] << std::endl;
+
   // Now that we have the reference image info, convert the model to
   // an image of that extent.
   vtkSmartPointer< vtkPolyDataToImageStencil > stencilSource =
@@ -174,7 +203,7 @@ int main( int argc, char* argv[] )
   stencilSource->SetOutputOrigin( origin );
   stencilSource->SetOutputSpacing( spacing );
   stencilSource->SetOutputWholeExtent( extent );
-  stencilSource->SetInputConnection( modelReader->GetOutputPort() );
+  stencilSource->SetInputConnection( transformedModel->GetOutputPort() );
 
   vtkSmartPointer<vtkImageStencilToImage> stencil =
     vtkSmartPointer<vtkImageStencilToImage>::New();
