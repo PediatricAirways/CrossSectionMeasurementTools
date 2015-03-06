@@ -2,6 +2,7 @@ import os
 import hashlib
 import Gears
 import Locations as lo
+import subprocess as sub
 
 
 class Gearbox:
@@ -44,6 +45,7 @@ class InputChecker:
 
 
 	def GetMismatched(self):
+		print "Generating Update Set"
 		self.Mismatched.clear()
 		for inpu in self.folderList:
 
@@ -63,13 +65,13 @@ class InputChecker:
 						if line != S256:
 							name = fname[:4]
 							self.Mismatched.add(name)
-							# s = open(sFile, 'w')
-							# s.write(S256)
+							s = open(sFile, 'w')
+							s.write(S256)
 				else:
 					name = fname[:4]
 					self.Mismatched.add(name)
-					# s = open(sFile, 'w')
-					# s.write(S256)
+					s = open(sFile, 'w')
+					s.write(S256)
 		return self.Mismatched
 
 
@@ -100,13 +102,30 @@ class PipelineStep:
 def main():
 	loc = lo.Locations()
 
-	list1 = [loc.Cross, loc.Landmarks]
-	list2 = [loc.Landmarks, loc.Cross]
+	list1 = [loc.OutputNrrd, loc.Clippings]
+	list2 = [loc.Landmarks, loc.Cut]
+	list3 = [loc.Heatflow, loc.OutputVtk]
+	list4 = [loc.Landmarks, loc.Cross]
+	list5 = [loc.Data]
 
-	step1 = PipelineStep(list1, 'GENCROSS')
-	step2 = PipelineStep(list2, 'EXTRACT')
-
+	step1 = PipelineStep(list1, 'CUT')
 	step1.Run()
+
+	step2 = PipelineStep(list2, 'LAPLACE')
+	step2.Run()
+
+	step3 = PipelineStep(list3, 'GENCROSS')
+	step3.Run()
+
+	step4 = PipelineStep(list4, 'EXTRACT')
+	step4.Run()
+
+	step5 =PipelineStep(list5, 'WRITE')
+	step5.Run()
+	
+	sub.call(['rm', loc.Slices])
+	sub.call(['rm', loc.Temp])
+	
 
 
 

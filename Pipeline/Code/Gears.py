@@ -1,13 +1,105 @@
 import os
 import subprocess as sub
 import Locations as lo
+import signal
+import numpy as np
+from contextlib import contextmanager
+
+class TimeoutException(Exception): pass
+
+
+@contextmanager
+def time_limit(seconds):
+    def signal_handler(signum, frame):
+        raise TimeoutException, "Timed out!"
+    signal.signal(signal.SIGALRM, signal_handler)
+    signal.alarm(seconds)
+    try:
+        yield
+    finally:
+        signal.alarm(0)
 
 
 
 class LaplaceGear:
 	"""gear for Pipeline Laplace"""
 	def __init__(self):
-		pass
+		self.locs = lo.Locations()
+
+
+	def ExtractArgs(self, DIR):
+		s = DIR + "_LANDMARKS.txt"
+		fileobj = open(os.path.join(self.locs.Landmarks, 'Files', s), 'r')
+
+		NoseTip 	= []
+		Columella 	= []
+		RightAla	= []
+		LeftAla		= []
+
+		TrachPoint  	= []
+		TrachVectorHead = []
+		NosePoint		= []
+		NoseVectorHead	= []
+		for line in fileobj:
+			l = line.split(" ")
+			if l[0] == "TracheaCarina":
+				TrachPoint.extend( [-float(l[2]),-float(l[3]),float(l[4][:-2])] )
+			elif l[0] == "NoseTip":
+				NoseTip.extend( [-float(l[2]),-float(l[3]),float(l[4][:-2])] )
+			elif l[0] == "Columella":
+				Columella.extend( [-float(l[2]),-float(l[3]),float(l[4][:-2])] )
+			elif l[0] == "RightAlaRim":
+				RightAla.extend( [-float(l[2]),-float(l[3]),float(l[4][:-2])] )
+			elif l[0] == "LeftAlaRim":
+				LeftAla.extend( [-float(l[2]),-float(l[3]),float(l[4][:-2])] )
+			elif l[0] == "NasalSpine":
+				NosePoint.extend( [-float(l[2]),-float(l[3]),float(l[4][:-2])] )
+			else:
+				pass
+		NoseTip = np.subtract(NoseTip, Columella)
+		LeftAla = np.subtract(LeftAla, RightAla)
+		NoseVectorHead = np.cross(NoseTip, LeftAla)
+		NoseVectorHead = np.add( NoseVectorHead/np.linalg.norm(NoseVectorHead), NosePoint )
+		TrachVectorHead = np.add( TrachPoint, [0, 0, 1] )
+
+		args = []
+		args.extend( [NosePoint, list(NoseVectorHead), TrachPoint, list(TrachVectorHead)] )
+		print args
+		return args
+
+
+	def CallFilter(self, args, DIR):
+		os.chdir(self.locs.AirwayLaplaceSolutionFilter)
+		CutFile = DIR + "_CUT.nrrd"
+		HeatFile = DIR + "_HEATFLOW.mha"
+		CUT_PATH=os.path.join(self.locs.Cut, 'Files', CutFile)
+		OUTPUT_PATH=os.path.join(self.locs.Heatflow, 'Files', HeatFile)
+
+		inpu 			= "--input " + CUT_PATH
+		output 			= "--output " + OUTPUT_PATH
+		nosePoint 		= "--nasalPoint " + str(args[0][0]) + "," + str(args[0][1]) + "," + str(args[0][2])
+		noseVectHead 	= "--nasalVectorHead " + str(args[1][0]) + "," + str(args[1][1]) + "," + str(args[1][2])
+		trachPoint 		= "--trachealPoint " + str(args[2][0]) + "," + str(args[2][1]) + "," + str(args[2][2])
+		trachVectHead 	= "--tracheaVectorHead " + str(args[3][0]) + "," + str(args[3][1]) + "," + str(args[3][2])
+
+		try:
+			with time_limit(3600):
+				sub.call( ["./AirwayLaplaceSolutionFilter", inpu, output, nosePoint, noseVectHead, trachPoint, trachVectHead])
+		except Exception, e:
+			print e
+
+
+	def Filter(self, SetOfScanIDs):
+		for DIR in SetOfScanIDs:
+			print DIR
+			
+			try:
+				
+				args = self.ExtractArgs(DIR)
+				self.CallFilter(args, DIR)
+			except Exception, e:
+				print e
+				continue
 
 
 #===============================================================================================
@@ -18,7 +110,68 @@ class LaplaceGear:
 class CutGear:
 	"""gear for pipeline Cut mouth"""
 	def __init__(self):
-		pass
+		self.locs = lo.Locations()
+
+
+	def ExtractArgs(self, DIR):
+		clips = DIR + "_CLIPPINGS.txt"
+		fileobj = open(os.path.join(self.locs.Clippings, 'Files', clips))
+
+		Center 		= []
+		Radius		= []
+
+		Center.append([0.0,0.0,0.0])
+		Radius.extend([0.0])
+
+		for i,line in enumerate(fileobj):
+			l = line.split(" ")
+			if i%2 == 0:
+				Center.append([-float(l[2]), -float(l[3]), float(l[4])])
+			else:
+				Radius.extend([float(l[2])])
+		args = []
+		args.extend( [Center] + [Radius] )
+		return args
+
+
+	def CallFilter(self, args, D):
+		os.chdir(self.locs.ExcludeSphere)
+		first  	= D + "_OUTPUT.nrrd"
+		segfile = D + "_CUT.nrrd"
+		FIRST_PATH=os.path.join(self.locs.OutputNrrd, 'Files', first)
+		CUT_PATH=os.path.join(self.locs.Cut, 'Files', segfile)
+
+		centers  = args[0]
+		radii	 = args[1]
+		input_paths = []
+
+		for i,x in enumerate(args[0]):
+			if i == 0:
+				input_paths.append(str(FIRST_PATH))
+			else:
+				input_paths.append( str(CUT_PATH) )
+			
+			inpu 	 = "--input " + input_paths[i]
+			output   = "--output " + CUT_PATH
+			Center   = "--Center " + str(centers[i][0]) + "," + str(centers[i][1]) + "," + str(centers[i][2])
+			Radius	 = "--Radius " + str(radii[i])
+			call 	 = "./ExcludeSphere" + ' ' + inpu + ' ' + output + ' ' + Center + ' ' + Radius
+			print call
+			try:
+				sub.call( ["./ExcludeSphere", inpu, output, Center, Radius])
+			except Exception, e:
+				print e
+
+
+	def Filter(self, SetOfScanIDs):
+		for DIR in SetOfScanIDs:
+			print DIR
+			try:
+				args = self.ExtractArgs(DIR)
+				self.CallFilter(args, DIR)
+			except Exception, e:
+				print e
+				continue
 
 
 #===============================================================================================
@@ -32,11 +185,11 @@ class CrossGear:
 	def __init__(self):
 		self.locs = lo.Locations()
 
-	def callFilter(self, D):
+	def CallFilter(self, D):
 
-		os.chdir("/Users/jonathankylstra/Cross-bin/lib/Slicer-4.4/cli-modules")
+		os.chdir(self.locs.ComputeAirwayCrossSections)
 
-		heatfile    = D + "_HEATFLOW.mhd"
+		heatfile    = D + "_HEATFLOW.mha"
 		modelFile   = D + "_OUTPUT.vtk"
 		output 	    = D + "_CROSS.vtp"
 
@@ -46,7 +199,8 @@ class CrossGear:
 
 		print "./ComputeAirwayCrossSections", HEAT_PATH, MODEL_PATH, OUTPUT_PATH
 		try:
-			sub.call( ["./ComputeAirwayCrossSections", HEAT_PATH, MODEL_PATH, OUTPUT_PATH])
+			with time_limit(3600):
+				sub.call( ["./ComputeAirwayCrossSections", HEAT_PATH, MODEL_PATH, OUTPUT_PATH])
 		except Exception, e:
 			print e
 
@@ -66,9 +220,13 @@ class ExtractGear:
 	"""gear that runs pipeExtractCrosssections"""
 	def __init__(self):
 		self.locs = lo.Locations()
+		self.DATA = []
 
 
-	def extractArgs(self, fileobj):
+	def ExtractArgs(self, DIR):
+		landmarks = DIR + "_LANDMARKS.txt"
+		fileobj = open( os.path.join(self.locs.Landmarks, 'Files', landmarks), 'r' )
+
 		Subglottic 	= []
 		InfSubglot 	= []
 		TVC 		= []
@@ -90,13 +248,13 @@ class ExtractGear:
 
 		args = []
 		args.extend( [TVC, Subglottic, InfSubglot, TC] )
-		print "args:", args
+		fileobj.close()
 		return args
 
 
 
-	def callFilter(self, args, D):
-		os.chdir("/Users/jonathankylstra/Cross-bin/lib/Slicer-4.4/cli-modules")
+	def CallFilter(self, args, D):
+		os.chdir(self.locs.ExtractCrossSections)
 		infile = D + "_CROSS.vtp"
 		outfile = D + "_ExtractedSegments.vtp"
 		IN_PATH=os.path.join(self.locs.Cross, 'Files', infile)
@@ -115,7 +273,6 @@ class ExtractGear:
 		else:
 			mp = "--queryPoints " + str(-args[4][0]) + "," + str(-args[4][1]) + "," + str(args[4][2])
 			mt = "--queryPoints " + str(-args[5][0]) + "," + str(-args[5][1]) + "," + str(args[5][2])
-			print args
 			try:
 				sub.call( ["./ExtractCrossSections", tvc, subg, inf, tc, mp, mt, IN_PATH, OUT_PATH])
 			except Exception, e:
@@ -123,14 +280,13 @@ class ExtractGear:
 
 
 
-	def extractALLData(self, DIR):
+	def ExtractALLData(self, DIR):
 		""" Puts all of the slice data into a csv file """
 
-		os.chdir("/Users/jonathankylstra/DATA/Generic-Build/GenericDataObjectReader.app/Contents/MacOS/")
+		os.chdir(self.locs.GenericDataObjectReader)
 		dirVTP = DIR + "_CROSS.vtp"
-		vtpFile = os.path.join(self.locs.Cross, dirVTP)
-		tempFile = DIR + '_slices.csv'
-		tempFile = os.path.join(self.locs.Segments, tempFile)
+		vtpFile = os.path.join(self.locs.Cross, 'Files', dirVTP)
+		tempFile = self.locs.Slices
 
 		try:
 			sub.call( ['./GenericDataObjectReader', vtpFile, tempFile] )
@@ -139,12 +295,15 @@ class ExtractGear:
 
 
 
-	def extractData(self, DIR, outfile):
-		""" Extracts the information about fiducials specified in extractArgs() """
+	def ExtractSpecifiedData(self, DIR):
+		""" Extracts the information about fiducials specified in ExtractArgs() """
 
-		os.chdir("/Users/jonathankylstra/DATA/Generic-Build/GenericDataObjectReader.app/Contents/MacOS/")
+		DataFName = DIR + '_Data.csv'
+		DataFile = open( os.path.join(self.locs.Data, 'Files', DataFName), 'w' )
+
+		os.chdir(self.locs.GenericDataObjectReader)
 		dirVTP = DIR + "_ExtractedSegments.vtp"
-		vtpFile = os.path.join(self.locs.Segments, dirVTP)
+		vtpFile = os.path.join(self.locs.Segments, 'Files', dirVTP)
 
 
 		sub.call( ['./GenericDataObjectReader', vtpFile, self.locs.Temp] )
@@ -157,7 +316,7 @@ class ExtractGear:
 			l =  l + ", " + line[:-1]
 
 		if len(lines) > 0:
-			outfile.write(l)
+			DataFile.write(l)
 
 		f.close()
 
@@ -167,17 +326,17 @@ class ExtractGear:
 	def GetSliceIndices(self, DIR):
 		""" Gets the indices of the TVC and Subglottic slices """
 
-		os.chdir("/Users/jonathankylstra/DATA/Slices-Build/SliceReader.app/Contents/MacOS/")
+		os.chdir(self.locs.SliceReader)
 		dirVTP = DIR + "_ExtractedSegments.vtp"
-		vtpFile = os.path.join(self.locs.Segments, dirVTP)
-		tempFile = DIR + '_slice.txt'
+		vtpFile = os.path.join(self.locs.Segments, 'Files', dirVTP)
+		tempFile = 'slice.txt'
 		tempFile = os.path.join(self.locs.Segments, tempFile)
 		sub.call( ['./SliceReader', vtpFile, tempFile] )
 
 		try:
 			f = open(tempFile, 'r')
 			lines = list(f)
-			# sub.call( ['rm', tempFile])
+			sub.call( ['rm', tempFile])
 			l = [ int(lines[0][:-1]), int(lines[1][:-1]) , int(lines[2][:-1]) ]
 			
 
@@ -187,11 +346,13 @@ class ExtractGear:
 			print e
 			return []
 
-	def PlaceMinXASlice(self, inds, DIR, outfile):
+	def PlaceMinXASlice(self, inds, DIR):
 		""" Adds information about the min XA to the output file """
 
-		SlicePath = '/Users/jonathankylstra/DATA/' + DIR + '/slices.csv'
-		SliceFile = open(SlicePath, 'r')
+		DataFName = DIR + '_Data.csv'
+		DataFile = open( os.path.join(self.locs.Data, 'Files', DataFName), 'a' )
+
+		SliceFile = open(self.locs.Slices, 'r')
 
 		lines = list(SliceFile)
 		minXA = 1000000
@@ -204,17 +365,19 @@ class ExtractGear:
 				minXA = float(line[0])
 				ind = i + inds[0] 
 				l = ll
-		outfile.write( ', ' + str(ind) + ', ' + l[:-1] )
+		DataFile.write( ', ' + str(ind) + ', ' + l[:-1] )
 		com = l.split(',')[2].split(' ')
 		com = [float(com[1]), float(com[2]), float(com[3][:-1])]
 		return com
 
 
-	def PlaceMidTracheaSlice(self, inds, DIR, outfile):
+	def PlaceMidTracheaSlice(self, inds, DIR):
 		""" Adds info about MidTrachea """
 
-		SlicePath = '/Users/jonathankylstra/DATA/' + DIR + '/slices.csv'
-		SliceFile = open(SlicePath, 'r')
+		DataFName = DIR + '_Data.csv'
+		DataFile = open( os.path.join(self.locs.Data, 'Files', DataFName), 'a' )
+
+		SliceFile = open(self.locs.Slices, 'r')
 
 		lines = list(SliceFile)
 		
@@ -260,7 +423,7 @@ class ExtractGear:
 
 		l = lines[start + index]
 		l = ', ' + l
-		outfile.write(l)
+		DataFile.write(l)
 		com = l.split(',')[3].split(' ')
 		com = [ float(com[1]), float(com[2]), float(com[3][:-1]) ]
 		return com
@@ -269,28 +432,26 @@ class ExtractGear:
 
 
 	def Filter(self, SetOfScanIDs):
-	for DIR in SetOfScanIDs: 
-		landmarks = DIR + "_LANDMARKS.txt"
-		try:
-			
-			
-			f = open( os.path.join(self.locs.Landmarks, 'Files', landmarks), 'r' )
-			args = extractArgs(f)
-			callFilter(args, DIR)
-			extractALLData(DIR)
-			extractData(DIR, x)
-			inds = GetSliceIndices(DIR)
-			if len(inds) > 0:
+		for DIR in SetOfScanIDs: 
 
-				args.append( PlaceMinXASlice(inds, DIR, x) )
-				args.append( PlaceMidTracheaSlice(inds, DIR, x) )
+			try:
+				args = self.ExtractArgs(DIR)
+				self.CallFilter(args, DIR)
+				self.ExtractALLData(DIR)
+				self.ExtractSpecifiedData(DIR)
+				inds = self.GetSliceIndices(DIR)
 
-				callFilter(args, DIR)
+				if len(inds) > 0:
 
-		except Exception, e:
-			print DIR
-			print e
-			continue
+					args.append( self.PlaceMinXASlice(inds, DIR) )
+					args.append( self.PlaceMidTracheaSlice(inds, DIR) )
+
+					self.CallFilter(args, DIR)
+
+			except Exception, e:
+				print DIR
+				print e
+				continue
 
 
 #===============================================================================================
@@ -301,7 +462,24 @@ class ExtractGear:
 class WriteGear:
 	"""gear for Write To CSV"""
 	def __init__(self):
-		pass
+		self.locs = lo.Locations()
+
+
+	def UpdateCSV(self):
+		os.chdir( os.path.join( self.locs.Data, 'Files' ) )
+		DATA = open(self.locs.AllData, 'w')
+		DATA.write("ScanID, TVC_XA, TVC_PER, TVC_COM , Subglottic_XA, Subglottic_PER, Subglottic_COM , InfSub_XA, InfSub_PER, InfSub_COM , MinSliceID, MinSlice_XA, MinSlice_PER, MinSlice_COM, MidT_XA, MidT_PER, MidT_COM \n")
+		datafiles = [ f for f in os.listdir('.') if f[0] != '.']
+		for f in datafiles:
+			fileobj = open(f, 'r')
+			for line in list(fileobj):
+				DATA.write(line)
+
+
+	def Filter(self, SetOfScanIDs):
+		if len(SetOfScanIDs) > 0:
+			self.UpdateCSV()
+
 		
 		
 		
