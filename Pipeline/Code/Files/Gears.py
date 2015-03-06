@@ -19,6 +19,81 @@ def time_limit(seconds):
     finally:
         signal.alarm(0)
 
+#===============================================================================================
+#===============================================================================================
+#===============================================================================================
+
+
+class CutGear:
+	"""gear for pipeline Cut mouth"""
+	def __init__(self):
+		self.locs = lo.Locations()
+
+
+	def ExtractArgs(self, DIR):
+		clips = DIR + "_CLIPPINGS.txt"
+		fileobj = open(os.path.join(self.locs.Clippings, 'Files', clips))
+
+		Center 		= []
+		Radius		= []
+
+		Center.append([0.0,0.0,0.0])
+		Radius.extend([0.0])
+
+		for i,line in enumerate(fileobj):
+			l = line.split(" ")
+			if i%2 == 0:
+				Center.append([-float(l[2]), -float(l[3]), float(l[4])])
+			else:
+				Radius.extend([float(l[2])])
+		args = []
+		args.extend( [Center] + [Radius] )
+		return args
+
+
+	def CallFilter(self, args, D):
+		os.chdir(self.locs.ExcludeSphere)
+		first  	= D + "_OUTPUT.nrrd"
+		segfile = D + "_CUT.nrrd"
+		FIRST_PATH=os.path.join(self.locs.OutputNrrd, 'Files', first)
+		CUT_PATH=os.path.join(self.locs.Cut, 'Files', segfile)
+
+		centers  = args[0]
+		radii	 = args[1]
+		input_paths = []
+
+		for i,x in enumerate(args[0]):
+			if i == 0:
+				input_paths.append(str(FIRST_PATH))
+			else:
+				input_paths.append( str(CUT_PATH) )
+			
+			inpu 	 = "--input " + input_paths[i]
+			output   = "--output " + CUT_PATH
+			Center   = "--Center " + str(centers[i][0]) + "," + str(centers[i][1]) + "," + str(centers[i][2])
+			Radius	 = "--Radius " + str(radii[i])
+			call 	 = "./ExcludeSphere" + ' ' + inpu + ' ' + output + ' ' + Center + ' ' + Radius
+			print call
+			try:
+				sub.call( ["./ExcludeSphere", inpu, output, Center, Radius])
+			except Exception, e:
+				print e
+
+
+	def Filter(self, SetOfScanIDs):
+		failedScans = self.locs.Cut + "FailedScans.txt"
+		failedScans = open(failedScans, 'w')
+		for DIR in SetOfScanIDs:
+			print DIR
+			try:
+				args = self.ExtractArgs(DIR)
+				self.CallFilter(args, DIR)
+			except Exception, e:
+				failedScans.write(DIR + '\n')
+				print e
+				continue
+		failedScans.close()
+
 
 #===============================================================================================
 #===============================================================================================
@@ -109,81 +184,6 @@ class LaplaceGear:
 				continue
 		failedScans.close()
 
-
-#===============================================================================================
-#===============================================================================================
-#===============================================================================================
-
-
-class CutGear:
-	"""gear for pipeline Cut mouth"""
-	def __init__(self):
-		self.locs = lo.Locations()
-
-
-	def ExtractArgs(self, DIR):
-		clips = DIR + "_CLIPPINGS.txt"
-		fileobj = open(os.path.join(self.locs.Clippings, 'Files', clips))
-
-		Center 		= []
-		Radius		= []
-
-		Center.append([0.0,0.0,0.0])
-		Radius.extend([0.0])
-
-		for i,line in enumerate(fileobj):
-			l = line.split(" ")
-			if i%2 == 0:
-				Center.append([-float(l[2]), -float(l[3]), float(l[4])])
-			else:
-				Radius.extend([float(l[2])])
-		args = []
-		args.extend( [Center] + [Radius] )
-		return args
-
-
-	def CallFilter(self, args, D):
-		os.chdir(self.locs.ExcludeSphere)
-		first  	= D + "_OUTPUT.nrrd"
-		segfile = D + "_CUT.nrrd"
-		FIRST_PATH=os.path.join(self.locs.OutputNrrd, 'Files', first)
-		CUT_PATH=os.path.join(self.locs.Cut, 'Files', segfile)
-
-		centers  = args[0]
-		radii	 = args[1]
-		input_paths = []
-
-		for i,x in enumerate(args[0]):
-			if i == 0:
-				input_paths.append(str(FIRST_PATH))
-			else:
-				input_paths.append( str(CUT_PATH) )
-			
-			inpu 	 = "--input " + input_paths[i]
-			output   = "--output " + CUT_PATH
-			Center   = "--Center " + str(centers[i][0]) + "," + str(centers[i][1]) + "," + str(centers[i][2])
-			Radius	 = "--Radius " + str(radii[i])
-			call 	 = "./ExcludeSphere" + ' ' + inpu + ' ' + output + ' ' + Center + ' ' + Radius
-			print call
-			try:
-				sub.call( ["./ExcludeSphere", inpu, output, Center, Radius])
-			except Exception, e:
-				print e
-
-
-	def Filter(self, SetOfScanIDs):
-		failedScans = self.locs.Cut + "FailedScans.txt"
-		failedScans = open(failedScans, 'w')
-		for DIR in SetOfScanIDs:
-			print DIR
-			try:
-				args = self.ExtractArgs(DIR)
-				self.CallFilter(args, DIR)
-			except Exception, e:
-				failedScans.write(DIR + '\n')
-				print e
-				continue
-		failedScans.close()
 
 
 #===============================================================================================
