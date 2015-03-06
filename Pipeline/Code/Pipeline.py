@@ -23,7 +23,8 @@ class Gearbox:
 
 
 	def Pipe(self, SetOfFiles):
-		self.Stage.Filter(SetOfFiles)
+		if len(SetOfFiles) > 0:
+			self.Stage.Filter(SetOfFiles)
 
 
 
@@ -56,7 +57,8 @@ class InputChecker:
 
 			for fname in fs:
 				dFile = os.path.join(Files, fname)
-				sFile = os.path.join(Sha256, fname, '.sha256')
+				sFile = fname + '.sha256'
+				sFile = os.path.join(Sha256, sFile)
 				S256  = self.GetSha256(dFile)
 
 				if os.path.isfile(sFile):
@@ -122,7 +124,7 @@ def main():
 
 	step5 =PipelineStep(list5, 'WRITE')
 	step5.Run()
-	
+
 	sub.call(['rm', loc.Slices])
 	sub.call(['rm', loc.Temp])
 	
