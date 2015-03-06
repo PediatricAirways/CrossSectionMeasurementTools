@@ -20,6 +20,10 @@ def time_limit(seconds):
         signal.alarm(0)
 
 
+#===============================================================================================
+#===============================================================================================
+#===============================================================================================
+
 
 class LaplaceGear:
 	"""gear for Pipeline Laplace"""
@@ -90,6 +94,8 @@ class LaplaceGear:
 
 
 	def Filter(self, SetOfScanIDs):
+		failedScans = self.locs.Heatflow + "FailedScans.txt"
+		failedScans = open(failedScans, 'w')
 		for DIR in SetOfScanIDs:
 			print DIR
 			
@@ -98,8 +104,10 @@ class LaplaceGear:
 				args = self.ExtractArgs(DIR)
 				self.CallFilter(args, DIR)
 			except Exception, e:
+				failedScans.write(DIR + '\n')
 				print e
 				continue
+		failedScans.close()
 
 
 #===============================================================================================
@@ -164,14 +172,18 @@ class CutGear:
 
 
 	def Filter(self, SetOfScanIDs):
+		failedScans = self.locs.Cut + "FailedScans.txt"
+		failedScans = open(failedScans, 'w')
 		for DIR in SetOfScanIDs:
 			print DIR
 			try:
 				args = self.ExtractArgs(DIR)
 				self.CallFilter(args, DIR)
 			except Exception, e:
+				failedScans.write(DIR + '\n')
 				print e
 				continue
+		failedScans.close()
 
 
 #===============================================================================================
@@ -205,13 +217,16 @@ class CrossGear:
 			print e
 
 	def Filter(self, SetOfScanIDs):
+		failedScans = self.locs.Cross + "FailedScans.txt"
+		failedScans = open(failedScans, 'w')
 		for DIR in SetOfScanIDs:
 			try:
 				self.callFilter(DIR)
 			except Exception, e:
 				print e
+				failedScans.write(DIR + '\n')
 				continue
-
+		failedScans.close()
 #===============================================================================================
 #===============================================================================================
 #===============================================================================================
@@ -432,6 +447,8 @@ class ExtractGear:
 
 
 	def Filter(self, SetOfScanIDs):
+		failedScans = self.locs.Segments + "FailedScans.txt"
+		failedScans = open(failedScans, 'w')
 		for DIR in SetOfScanIDs: 
 
 			try:
@@ -450,8 +467,10 @@ class ExtractGear:
 
 			except Exception, e:
 				print DIR
+				failedScans.write(DIR + '\n')
 				print e
 				continue
+		failedScans.close()
 
 
 #===============================================================================================
