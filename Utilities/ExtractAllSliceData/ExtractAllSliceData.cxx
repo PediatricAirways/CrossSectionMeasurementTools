@@ -35,7 +35,7 @@ int main ( int argc, char *argv[] )
 
  vtkSmartPointer<vtkDoubleArray> area = vtkSmartPointer<vtkDoubleArray>::New();
 
- for (int i = 0; i < polydata->GetFieldData()->GetArray("area")->GetSize(); ++i)
+ for ( int i = 0; i < polydata->GetFieldData()->GetArray("area")->GetSize(); ++i )
  {
    myfile << polydata->GetFieldData()->GetArray("area")->GetTuple(i)[0]<< ", " <<
                 polydata->GetFieldData()->GetArray("perimeter")->GetTuple(i)[0]<<  ", " << 
