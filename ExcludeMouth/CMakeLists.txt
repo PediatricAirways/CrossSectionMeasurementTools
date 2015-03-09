@@ -5,19 +5,14 @@ project(ExcludeSphere)
 #-----------------------------------------------------------------------------
 set(MODULE_NAME ExcludeSphere)
 
-
 #-----------------------------------------------------------------------------
-find_package(Slicer REQUIRED)
-include(${Slicer_USE_FILE})
-
 find_package(Eigen3 REQUIRED)
-
 
 #-----------------------------------------------------------------------------
 find_package(SlicerExecutionModel REQUIRED)
 include(${SlicerExecutionModel_USE_FILE})
 
-
+find_package(ITK 4.7 REQUIRED)
 include( ${ITK_USE_FILE} )
 
 

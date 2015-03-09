@@ -8,11 +8,11 @@ set(MODULE_NAME ConvertPolyDataToImage)
 find_package(SlicerExecutionModel REQUIRED)
 include(${SlicerExecutionModel_USE_FILE})
 
-find_package(VTK)
-include( ${VTK_USE_FILE} )
-
 find_package(ITK)
 include( ${ITK_USE_FILE} )
+
+find_package(VTK)
+include( ${VTK_USE_FILE} )
 
 # Slicer doesn't enable ITK's VtkGlue module, so we add the include
 # directory manually here.
