@@ -18,6 +18,12 @@
 #include "itkImageFileWriter.h"
 #include "itkImageFileReader.h"
 
+#include <vtkClipPolyData.h>
+#include <vtkXMLPolyDataReader.h>
+#include <vtkPolyDataWriter.h>
+#include <vtkSphere.h>
+#include <vtkSmartPointer.h>
+
 #include "../ITK/itkExcludeSphereImageFilter.h"
 #include "ExcludeSphereCLP.h"
 
@@ -75,8 +81,7 @@ int DoIt( int argc, char * argv[], T )
   SphereCent[0] = Center[0];
   SphereCent[1] = Center[1];
   SphereCent[2] = Center[2];
-
-
+\
   exclude->SetSphereRadius( Radius );
   exclude->SetSphereCenter( SphereCent );
 
@@ -89,11 +94,39 @@ int DoIt( int argc, char * argv[], T )
   exclude->Update();
   // Write the output
   writer->SetInput( exclude->GetOutput() );
-  writer->Update();
-  writer->Write();
+
+  try
+    {
+    writer->Update();
+    writer->Write();
+    }
+  catch (itk::ExceptionObject & object)
+    {
+    std::cerr << "Could not write file '" << outputImage << "\n";
+    return EXIT_FAILURE;
+    }
+
+  // Now trim the surface geometry
+  vtkSmartPointer<vtkXMLPolyDataReader> surfaceReader =
+    vtkSmartPointer<vtkXMLPolyDataReader>::New();
+  surfaceReader->SetFileName( inputGeometry.c_str() );
+
+  // Cut the surface
+  vtkSmartPointer<vtkSphere> sphereFunction = vtkSmartPointer<vtkSphere>::New();
+  sphereFunction->SetCenter( Center[0], Center[1], Center[2] );
+  sphereFunction->SetRadius( Radius );
+
+  vtkSmartPointer<vtkClipPolyData> clipper = vtkSmartPointer<vtkClipPolyData>::New();
+  clipper->SetClipFunction( sphereFunction );
+  clipper->SetInputConnection( surfaceReader->GetOutputPort() );
+
+  vtkSmartPointer<vtkPolyDataWriter> surfaceWriter =
+    vtkSmartPointer<vtkPolyDataWriter>::New();
+  surfaceWriter->SetFileName( outputGeometry.c_str() );
+  surfaceWriter->SetInputConnection( clipper->GetOutputPort() );
+  surfaceWriter->Update();
 
   return EXIT_SUCCESS;
-
 }
 
 } // end of anonymous namespace
