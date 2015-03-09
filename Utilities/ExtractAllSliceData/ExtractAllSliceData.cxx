@@ -20,8 +20,8 @@ int main ( int argc, char *argv[] )
   std::string filename = argv[1];
   std::string outname  = argv[2];
 
-  ofstream myfile;
-  myfile.open(outname);
+  std::ofstream myfile;
+  myfile.open(outname.c_str());
   
  
   // Read all the data from the file
