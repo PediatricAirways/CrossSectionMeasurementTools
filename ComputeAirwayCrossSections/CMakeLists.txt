@@ -6,11 +6,7 @@ set(MODULE_NAME ComputeAirwayCrossSections)
 find_package(SlicerExecutionModel REQUIRED)
 include(${SlicerExecutionModel_USE_FILE})
 
-find_package(ITK 4.7
-  COMPONENTS
-    ITKIOImageBase
-    ITKVTK
- REQUIRED)
+find_package(ITK 4.7 REQUIRED)
 include(${ITK_USE_FILE})
 
 # Include VTK
