@@ -4,13 +4,7 @@ cmake_minimum_required(VERSION 2.8)
 find_package(SlicerExecutionModel REQUIRED)
 include(${SlicerExecutionModel_USE_FILE})
 
-find_package(ITK 4.7
-  COMPONENTS
-    ITKIOImageBase
-    ITKImageIntensity
-    ITKImageLabel
-    ITKVTK
- REQUIRED)
+find_package(ITK 4.7 REQUIRED)
 include(${ITK_USE_FILE})
 
 #-----------------------------------------------------------------------------
