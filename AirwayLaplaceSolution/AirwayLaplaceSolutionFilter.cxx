@@ -170,12 +170,6 @@ int main( int argc, char * argv[] )
       case itk::ImageIOBase::LONG:
         return DoIt( argc, argv, static_cast<long>(0) );
         break;
-      case itk::ImageIOBase::FLOAT:
-        return DoIt( argc, argv, static_cast<float>(0) );
-        break;
-      case itk::ImageIOBase::DOUBLE:
-        return DoIt( argc, argv, static_cast<double>(0) );
-        break;
       case itk::ImageIOBase::UNKNOWNCOMPONENTTYPE:
       default:
         std::cout << "unknown component type" << std::endl;

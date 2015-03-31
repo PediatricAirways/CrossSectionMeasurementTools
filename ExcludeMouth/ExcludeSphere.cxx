@@ -20,7 +20,7 @@
 
 #include <vtkClipPolyData.h>
 #include <vtkXMLPolyDataReader.h>
-#include <vtkPolyDataWriter.h>
+#include <vtkXMLPolyDataWriter.h>
 #include <vtkSphere.h>
 #include <vtkSmartPointer.h>
 
@@ -113,15 +113,16 @@ int DoIt( int argc, char * argv[], T )
 
   // Cut the surface
   vtkSmartPointer<vtkSphere> sphereFunction = vtkSmartPointer<vtkSphere>::New();
-  sphereFunction->SetCenter( Center[0], Center[1], Center[2] );
+  // RAS to LPS transformation of sphere center
+  sphereFunction->SetCenter( -Center[0], -Center[1], Center[2] );
   sphereFunction->SetRadius( Radius );
 
   vtkSmartPointer<vtkClipPolyData> clipper = vtkSmartPointer<vtkClipPolyData>::New();
   clipper->SetClipFunction( sphereFunction );
   clipper->SetInputConnection( surfaceReader->GetOutputPort() );
 
-  vtkSmartPointer<vtkPolyDataWriter> surfaceWriter =
-    vtkSmartPointer<vtkPolyDataWriter>::New();
+  vtkSmartPointer<vtkXMLPolyDataWriter> surfaceWriter =
+    vtkSmartPointer<vtkXMLPolyDataWriter>::New();
   surfaceWriter->SetFileName( outputGeometry.c_str() );
   surfaceWriter->SetInputConnection( clipper->GetOutputPort() );
   surfaceWriter->Update();
