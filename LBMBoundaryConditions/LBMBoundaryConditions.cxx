@@ -59,6 +59,7 @@ int DoIt(int argc, char* argv[], T)
   catch ( itk::ExceptionObject & except )
     {
     std::cerr << "Could not read CT file '" << ctImage << "'\n";
+    std::cerr << except << std::endl;
     return EXIT_FAILURE;
     }
 
@@ -71,6 +72,7 @@ int DoIt(int argc, char* argv[], T)
   catch ( itk::ExceptionObject & except )
     {
     std::cerr << "Could not read segmentation file '" << segmentationImage << "'\n";
+    std::cout << except << std::endl;
     return EXIT_FAILURE;
     }
 
@@ -155,6 +157,7 @@ int DoIt(int argc, char* argv[], T)
   catch ( itk::ExceptionObject & except )
     {
     std::cerr << "Could not write file '" << lbmImage << "'\n";
+    std::cerr << except << std::endl;
     return EXIT_FAILURE;
     }
 
