@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<executable>
+  <category>Filtering</category>
+  <title>Create Lattice-Boltzmann Image</title>
+  <description>
+    <![CDATA[Creates an image for Sorin Mitran's lattice-Boltzmann CFD solver.]]>
+  </description>
+  <contributor>Cory Quammen</contributor>
+
+  <parameters>
+    <label>I/O</label>
+    <description>The input and output images</description>
+    <image>
+      <name>ctImage</name>
+      <label>CT image</label>
+      <longflag>--ctImage</longflag>
+      <channel>input</channel>
+      <default>None</default>
+      <description><![CDATA[Original CT image.]]></description>
+    </image>
+    <image>
+      <name>segmentationImage</name>
+      <label>Segmentation image</label>
+      <longflag>--segmentationImage</longflag>
+      <channel>input</channel>      
+      <default>None</default>
+      <description><![CDATA[Segmentation image derived from the original CT image.]]></description>
+    </image>
+    <image>
+      <name>lbmImage</name>
+      <label>LBM image</label>
+      <longflag>--lbmImage</longflag>
+      <channel>output</channel>
+      <default>None</default>
+      <description><![CDATA[Segmentation image labeled for LBM simulation.]]></description>
+    </image>
+  </parameters>
+
+  <parameters>
+    <label>Segmentation image parameters</label>
+    <description>
+      <![CDATA[Parameters that were used to create the segmentation image.]]>
+    </description>
+    <integer>
+      <name>segmentationThreshold</name>
+      <label>Segmentation threshold</label>
+      <longflag>--segmentationThreshold</longflag>
+      <description><![CDATA[Threshold used to create the segmentation.]]></description>
+      <default>-250</default>
+    </integer>
+  </parameters>
+
+  <parameters>
+    <label>Nose sphere parameters</label>
+    <description><![CDATA[Center and radius of nose sphere.]]></description>
+
+    <point multiple="false" coordinateSystem="lps">
+      <name>noseSphereCenter</name>
+      <label>Nose sphere center</label>
+      <longflag>--noseSphereCenter</longflag>
+      <description>The center of the nose sphere.</description>
+      <default>0,0,0</default>
+    </point>
+    <double>
+      <name>noseSphereRadius</name>
+      <label>Nose sphere radius</label>
+      <longflag>--noseSphereRadius</longflag>
+      <description>The radius of the nose sphere.</description>
+      <default>10.0</default>
+    </double> 
+
+  </parameters>
+  
+</executable>
