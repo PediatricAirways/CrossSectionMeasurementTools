@@ -21,6 +21,10 @@ include(${SlicerExecutionModel_USE_FILE})
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 set(MODULE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+if (WIN32)
+  add_definitions(-D_SCL_SECURE_NO_WARNINGS)
+endif()
+
 add_subdirectory(AirwayLaplaceSolution)
 add_subdirectory(ComputeAirwayCrossSections)
 add_subdirectory(ConvertPolyDataToImage)

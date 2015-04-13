@@ -100,9 +100,10 @@ int DoIt( int argc, char * argv[], T )
     writer->Update();
     writer->Write();
     }
-  catch (itk::ExceptionObject & object)
+  catch (itk::ExceptionObject & except)
     {
     std::cerr << "Could not write file '" << outputImage << "\n";
+    std::cerr << except << std::endl;
     return EXIT_FAILURE;
     }
 

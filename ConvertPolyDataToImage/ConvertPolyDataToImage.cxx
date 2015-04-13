@@ -62,6 +62,7 @@ int GetReferenceInfo( const char* fileName, int extent[6], double origin[3], dou
   catch ( itk::ExceptionObject & except )
     {
     std::cerr << "Could not read file '" << fileName << "'\n";
+    std::cerr << except << std::endl;
     return EXIT_FAILURE;
     }
 
@@ -231,6 +232,7 @@ int main( int argc, char* argv[] )
   catch ( itk::ExceptionObject & except )
     {
     std::cerr << "Could not write file '" << outputImage << "'\n";
+    std::cerr << except << "\n";
     return EXIT_FAILURE;
     }
 

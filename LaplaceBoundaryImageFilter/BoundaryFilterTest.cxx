@@ -27,7 +27,6 @@ int main(int argc, char *argv[])
 
 
   // Input Parsing
-  double    x, y, z;
   PointType nP, nV;
   PointType tP, tV;
 
