@@ -202,8 +202,6 @@ int DoIt( int argc, char* argv[], T )
   threshold->SetInputData( itk2vtkFilter->GetOutput() );
   threshold->Update();
 
-  vtkUnstructuredGrid* thresholded = threshold->GetOutput();
-
   // Now create a set of 1000 contours along the heat flow image
   vtkIdType numContours = 1000;
   vtkSmartPointer<vtkContourFilter> contourFilter =
@@ -211,8 +209,6 @@ int DoIt( int argc, char* argv[], T )
   contourFilter->GenerateValues( numContours, 0.0, 1.0 );
   contourFilter->SetInputConnection( threshold->GetOutputPort() );
   contourFilter->Update();
-
-  vtkPolyData* contours = contourFilter->GetOutput();
 
   // Point data with heat flow values
   vtkSmartPointer<vtkDoubleArray> heatValues = vtkSmartPointer<vtkDoubleArray>::New();
