@@ -80,7 +80,7 @@ int DoIt(int argc, char* argv[], T)
 
 #define IMPOSED_INFLOW 100
 #define IMPOSED_OUTFLOW 200
-  
+
   const int INTERIOR      =   0;
   const int EXTERIOR      =  -1;
   const int INFLOW_LOCAL  = IMPOSED_INFLOW;
