@@ -95,8 +95,6 @@ int main( int argc, char* argv[] )
   cellLocator->SetDataSet( crossSectionsPD );
   cellLocator->BuildLocator();
 
-  size_t numQueryPoints = queryPoints.size();
-
   // Field data containing meta data about the cross sections. One
   // entry for each cross-section is stored for each of the arrays
   // centerOfMassInfo, averageNormalInfo, areaInfo, and perimeterInfo.
