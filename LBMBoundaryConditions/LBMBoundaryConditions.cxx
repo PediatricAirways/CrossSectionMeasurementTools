@@ -84,7 +84,7 @@ int DoIt(int argc, char* argv[], T)
   const int INTERIOR      =   0;
   const int EXTERIOR      =  -1;
   const int INFLOW_LOCAL  = IMPOSED_INFLOW;
-  const int OUTFLOW_LOCAL = IMPOSED_OUTFLOW;
+  //const int OUTFLOW_LOCAL = IMPOSED_OUTFLOW;
 
   // Add the nose sphere to the segmentation
   double sphereCenter[3];
@@ -123,7 +123,7 @@ int DoIt(int argc, char* argv[], T)
 
   typedef itk::ConstantPadImageFilter< InputImageType, InputImageType >
     SourcePadFilterType;
-  SourcePadFilterType::Pointer sourcePadFilter = SourcePadFilterType::New();
+  typename SourcePadFilterType::Pointer sourcePadFilter = SourcePadFilterType::New();
   sourcePadFilter->SetPadLowerBound( lowerBound );
   sourcePadFilter->SetPadUpperBound( upperBound );
   sourcePadFilter->SetConstant( -1024 );
@@ -131,7 +131,7 @@ int DoIt(int argc, char* argv[], T)
 
   typedef itk::ConstantPadImageFilter< LabelImageType, LabelImageType >
     BinaryPadFilterType;
-  BinaryPadFilterType::Pointer binaryPadFilter = BinaryPadFilterType::New();
+  typename BinaryPadFilterType::Pointer binaryPadFilter = BinaryPadFilterType::New();
   binaryPadFilter->SetPadLowerBound( lowerBound );
   binaryPadFilter->SetPadUpperBound( upperBound );
   binaryPadFilter->SetConstant( EXTERIOR );
@@ -182,23 +182,11 @@ int main( int argc, char* argv[] )
 
     switch ( pixelType )
       {
-      case itk::ImageIOBase::CHAR:
-        result = DoIt( argc, argv, static_cast<char>(0) );
-        break;
-      case itk::ImageIOBase::UCHAR:
-        result = DoIt( argc, argv, static_cast<unsigned char>(0) );
-        break;
       case itk::ImageIOBase::SHORT:
         result = DoIt( argc, argv, static_cast<short>(0) );
         break;
-      case itk::ImageIOBase::USHORT:
-        result = DoIt( argc, argv, static_cast<unsigned short>(0) );
-        break;
       case itk::ImageIOBase::INT:
         result = DoIt( argc, argv, static_cast<int>(0) );
-        break;
-      case itk::ImageIOBase::UINT:
-        result = DoIt( argc, argv, static_cast<unsigned int>(0) );
         break;
       case itk::ImageIOBase::FLOAT:
         result = DoIt( argc, argv, static_cast<float>(0) );

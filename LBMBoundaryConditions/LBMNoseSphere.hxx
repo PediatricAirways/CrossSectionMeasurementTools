@@ -3,6 +3,8 @@
 
 #include <queue>
 
+#include <itkImage.h>
+
 #include "LBMNoseSphere.h"
 
 namespace {
