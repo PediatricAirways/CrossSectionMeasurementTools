@@ -245,6 +245,7 @@ LaplaceEquationSolverImageFilter< TInputImage, TOutputImage >
   std::time( &endTime );
 
   double elapsedSeconds = std::difftime( endTime, startTime );
+  (void) elapsedSeconds; // To avoid warning when compiled in release mode
   itkDebugMacro( << "Execution took " << elapsedSeconds << " seconds." );
 
   if ( solver.info() != Eigen::Success )
