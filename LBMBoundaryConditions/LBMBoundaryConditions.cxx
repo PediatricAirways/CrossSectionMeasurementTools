@@ -77,8 +77,6 @@ int DoIt(int argc, char* argv[], T)
     return EXIT_FAILURE;
     }
 
-  std::cout << "label image: " << labelReader->GetOutput()->GetLargestPossibleRegion() << std::endl;
-
 #define IMPOSED_INFLOW 100
 #define IMPOSED_OUTFLOW 200
 
@@ -101,7 +99,7 @@ int DoIt(int argc, char* argv[], T)
                          sphereRadius,
                          labelReader->GetOutput() );
 
-  // Expand image if the nose sphere falls outside of it.
+// Expand image if the nose sphere falls outside of it.
   LabelImageType::SizeType lowerBound;
   lowerBound.Fill( 0 );
   LabelImageType::SizeType upperBound;
@@ -129,6 +127,16 @@ int DoIt(int argc, char* argv[], T)
   sourcePadFilter->SetPadUpperBound( upperBound );
   sourcePadFilter->SetConstant( -1024 );
   sourcePadFilter->SetInput( inputReader->GetOutput() );
+  try
+    {
+    sourcePadFilter->Update();
+    }
+  catch ( itk::ExceptionObject & except )
+    {
+    std::cerr << "Could not update sourcePadFilter\n";
+    std::cerr << except << "\n";
+    return EXIT_FAILURE;
+    }
 
   typedef itk::ConstantPadImageFilter< LabelImageType, LabelImageType >
     BinaryPadFilterType;
@@ -137,6 +145,16 @@ int DoIt(int argc, char* argv[], T)
   binaryPadFilter->SetPadUpperBound( upperBound );
   binaryPadFilter->SetConstant( EXTERIOR );
   binaryPadFilter->SetInput( labelReader->GetOutput() );
+  try
+    {
+    binaryPadFilter->Update();
+    }
+  catch ( itk::ExceptionObject & except )
+    {
+    std::cerr << "Could not update binaryPadFilter\n";
+    std::cerr << except << "\n";
+    return EXIT_FAILURE;
+    }
 
   LabelImageType* binaryImage = binaryPadFilter->GetOutput();
 
@@ -256,10 +274,22 @@ int main( int argc, char* argv[] )
     {
     GetImageType( ctImage, pixelType, componentType );
 
-    switch ( pixelType )
+    switch ( componentType )
       {
+      case itk::ImageIOBase::UCHAR:
+        result = DoIt( argc, argv, static_cast<unsigned char>(0) );
+        break;
+      case itk::ImageIOBase::CHAR:
+        result = DoIt( argc, argv, static_cast<char>(0) );
+        break;
+      case itk::ImageIOBase::USHORT:
+        result = DoIt( argc, argv, static_cast<unsigned short>(0) );
+        break;
       case itk::ImageIOBase::SHORT:
         result = DoIt( argc, argv, static_cast<short>(0) );
+        break;
+      case itk::ImageIOBase::UINT:
+        result = DoIt( argc, argv, static_cast<unsigned int>(0) );
         break;
       case itk::ImageIOBase::INT:
         result = DoIt( argc, argv, static_cast<int>(0) );
