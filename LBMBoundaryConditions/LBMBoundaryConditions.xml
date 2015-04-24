@@ -68,7 +68,18 @@
       <description>The radius of the nose sphere.</description>
       <default>10.0</default>
     </double> 
-
   </parameters>
   
+  <parameters>
+    <label>Outflow cutoff parameters</label>
+    <description><![CDATA[Axial image plane that serves as outflow boundary.]]></description>
+
+    <point multiple="false" coordinateSystem="lps">
+      <name>outflowCutoff</name>
+      <label>Outflow cutoff position</label>
+      <longflag>--outflowCutoffPosition</longflag>
+      <description>The axial plane passing through this point is used as the outflow boundary for the geometry.</description>
+    </point>
+  </parameters>
+
 </executable>

@@ -5,6 +5,7 @@
 #include "LBMNoseSphere.h"
 #include "LBMBoundaryConditionsCLP.h"
 
+#include <itkAutoCropImageFilter.h>
 #include <itkConstantPadImageFilter.h>
 #include <itkImageFileReader.h>
 #include <itkImageFileWriter.h>
@@ -84,7 +85,7 @@ int DoIt(int argc, char* argv[], T)
   const int INTERIOR      =   0;
   const int EXTERIOR      =  -1;
   const int INFLOW_LOCAL  = IMPOSED_INFLOW;
-  //const int OUTFLOW_LOCAL = IMPOSED_OUTFLOW;
+  const int OUTFLOW_LOCAL = IMPOSED_OUTFLOW;
 
   // Add the nose sphere to the segmentation
   double sphereCenter[3];
@@ -143,13 +144,88 @@ int DoIt(int argc, char* argv[], T)
                  sourcePadFilter->GetOutput(), segmentationThreshold,
                  INTERIOR, EXTERIOR, INFLOW_LOCAL );
 
-  // MORE STUFF HERE
+  // Now fill in the volume below the lower cutoff seed
+  LabelImageType::PointType cutoffITKPoint;
+  cutoffITKPoint[0] = outflowCutoff[0];
+  cutoffITKPoint[1] = outflowCutoff[1];
+  cutoffITKPoint[2] = outflowCutoff[2];
+  LabelImageType::IndexType sliceIndex;
+  binaryImage->TransformPhysicalPointToIndex( cutoffITKPoint, sliceIndex );
+
+  LabelImageType::RegionType belowRegion( binaryImage->GetLargestPossibleRegion() );
+  LabelImageType::IndexType belowIndex( belowRegion.GetIndex() );
+  LabelImageType::SizeType belowSize( belowRegion.GetSize() );
+  belowSize[2] = (sliceIndex[2] - belowIndex[2]);
+  belowRegion.SetSize( belowSize );
+  itk::ImageRegionIterator< LabelImageType > belowIterator( binaryImage,
+                                                            belowRegion );
+  while ( !belowIterator.IsAtEnd() ) {
+    belowIterator.Set( EXTERIOR );
+    ++belowIterator;
+  }
+
+  // Now find the smallest part of the image that contains all the
+  // geometry
+  typedef itk::AutoCropImageFilter< LabelImageType, LabelImageType > CropFilterType;
+  CropFilterType::Pointer cropper = CropFilterType::New();
+  cropper->SetBackgroundValue( EXTERIOR );
+  CropFilterType::InputImageSizeType pad = {{ 1, 1, 1 }};
+  cropper->SetPadRadius( pad );
+  cropper->SetInput( binaryImage );
+  cropper->Update();
+
+  binaryImage = cropper->GetOutput();
+
+  // Get second Z slice and fill it with outflow boundary code
+  int zSlice = binaryImage->GetLargestPossibleRegion().GetIndex()[2] + 1;
+
+  // Add the outflow boundary to the image
+  LabelImageType::RegionType region = binaryImage->GetLargestPossibleRegion();
+  LabelImageType::IndexType index = region.GetIndex();
+  LabelImageType::SizeType size = region.GetSize();
+  for ( unsigned int j = index[1]; j < index[1] + size[1]; ++j ) {
+    for ( unsigned int i = index[0]; i < index[0] + size[0]; ++i ) {
+      LabelImageType::IndexType index = {{ i, j, zSlice }};
+      if ( binaryImage->GetPixel( index ) == 0 ) {
+        binaryImage->SetPixel( index, OUTFLOW_LOCAL );
+      }
+
+      // If the z-plane is set to 0 or the segmentation is not cut
+      // off at a z-plane above 0, the cropped image will go all the
+      // way to the bottom. In this case, we need to set the voxels
+      // in the z-plane to exterior pixels
+      index[2]--;
+      binaryImage->SetPixel( index, EXTERIOR );
+    }
+  }
+
+  // Pad by at least 1 voxel on all sides, but ensure that size
+  // of each dimension is a multiple of 16
+  typedef itk::ConstantPadImageFilter< LabelImageType, LabelImageType > PadFilterType;
+  PadFilterType::Pointer padFilter = PadFilterType::New();
+  padFilter->SetConstant( -1 );
+
+  PadFilterType::SizeType padAmount;
+  for ( int i = 0; i < 3; ++i ) {
+    if ( size[i] % 16 != 0 ) {
+      padAmount[i] = ( 16 - (size[i] % 16) );
+    } else {
+      padAmount[i] = 0;
+    }
+  }
+  padFilter->SetPadUpperBound( padAmount );
+  padFilter->SetInput( binaryImage );
+  padFilter->Update();
+
+  size = padFilter->GetOutput()->GetLargestPossibleRegion().GetSize();
+
+  LabelImageType * paddedImage = padFilter->GetOutput();
 
   // Write the output
   typedef itk::ImageFileWriter< LabelImageType > OutputWriter;
   typename OutputWriter::Pointer writer = OutputWriter::New();
   writer->SetFileName( lbmImage.c_str() );
-  writer->SetInput( binaryImage );
+  writer->SetInput( paddedImage );
   try
     {
     writer->Update();
