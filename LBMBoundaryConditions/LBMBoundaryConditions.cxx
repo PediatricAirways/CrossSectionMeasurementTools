@@ -6,9 +6,12 @@
 #include "LBMBoundaryConditionsCLP.h"
 
 #include <itkAutoCropImageFilter.h>
+#include <itkBinaryThresholdImageFilter.h>
+#include <itkConnectedComponentImageFilter.h>
 #include <itkConstantPadImageFilter.h>
 #include <itkImageFileReader.h>
 #include <itkImageFileWriter.h>
+#include <itkRelabelComponentImageFilter.h>
 
 // Use an anonymous namespace to keep class types and function names
 // from colliding when module is used as shared object module.  Every
@@ -47,7 +50,7 @@ int DoIt(int argc, char* argv[], T)
   const unsigned int Dimension = 3;
   typedef T InputPixelType;
   typedef itk::Image< InputPixelType, Dimension > InputImageType;
-  typedef itk::Image< char, Dimension >           LabelImageType;
+  typedef itk::Image< short, Dimension >          LabelImageType;
   typedef itk::ImageFileReader< InputImageType >  InputReaderType;
   typedef itk::ImageFileReader< LabelImageType >  LabelReaderType;
 
@@ -85,6 +88,37 @@ int DoIt(int argc, char* argv[], T)
   const int INFLOW_LOCAL  = IMPOSED_INFLOW;
   const int OUTFLOW_LOCAL = IMPOSED_OUTFLOW;
 
+  // Remove small islands from the image
+  // WARNING: input to the ConnectedComponentImageFilter requires a
+  // non-negative background value, otherwise it will likely crash.
+  typedef itk::ConnectedComponentImageFilter< LabelImageType,
+                                              LabelImageType,
+                                              LabelImageType >
+    ConnectedComponentFilterType;
+  ConnectedComponentFilterType::Pointer connectedComponentFilter =
+    ConnectedComponentFilterType::New();
+  connectedComponentFilter->SetBackgroundValue( 0 );
+  connectedComponentFilter->FullyConnectedOn();
+  connectedComponentFilter->SetInput( labelReader->GetOutput() );
+
+  typedef itk::RelabelComponentImageFilter< LabelImageType,
+                                            LabelImageType >
+    RelabelComponentFilterType;
+  RelabelComponentFilterType::Pointer relabelComponentFilter =
+    RelabelComponentFilterType::New();
+  relabelComponentFilter->SetInput( connectedComponentFilter->GetOutput() );
+
+  typedef itk::BinaryThresholdImageFilter< LabelImageType, LabelImageType >
+    ConnectedComponentThresholdFilterType;
+  ConnectedComponentThresholdFilterType::Pointer relabelThresholdFilter =
+    ConnectedComponentThresholdFilterType::New();
+  relabelThresholdFilter->SetInsideValue( INTERIOR );
+  relabelThresholdFilter->SetOutsideValue( EXTERIOR );
+  relabelThresholdFilter->SetLowerThreshold( 1 );
+  relabelThresholdFilter->SetUpperThreshold( 1 );
+  relabelThresholdFilter->SetInput( relabelComponentFilter->GetOutput() );
+  relabelThresholdFilter->UpdateLargestPossibleRegion();
+
   // Add the nose sphere to the segmentation
   double sphereCenter[3];
   sphereCenter[0] = noseSphereCenter[0];
@@ -99,7 +133,7 @@ int DoIt(int argc, char* argv[], T)
                          sphereRadius,
                          labelReader->GetOutput() );
 
-// Expand image if the nose sphere falls outside of it.
+  // Expand image if the nose sphere falls outside of it.
   LabelImageType::SizeType lowerBound;
   lowerBound.Fill( 0 );
   LabelImageType::SizeType upperBound;
@@ -144,7 +178,7 @@ int DoIt(int argc, char* argv[], T)
   binaryPadFilter->SetPadLowerBound( lowerBound );
   binaryPadFilter->SetPadUpperBound( upperBound );
   binaryPadFilter->SetConstant( EXTERIOR );
-  binaryPadFilter->SetInput( labelReader->GetOutput() );
+  binaryPadFilter->SetInput( relabelThresholdFilter->GetOutput() );
   try
     {
     binaryPadFilter->Update();
@@ -201,8 +235,8 @@ int DoIt(int argc, char* argv[], T)
   LabelImageType::RegionType region = binaryImage->GetLargestPossibleRegion();
   LabelImageType::IndexType index = region.GetIndex();
   LabelImageType::SizeType size = region.GetSize();
-  for ( unsigned int j = index[1]; j < index[1] + size[1]; ++j ) {
-    for ( unsigned int i = index[0]; i < index[0] + size[0]; ++i ) {
+  for ( int j = index[1]; j < index[1] + (int)size[1]; ++j ) {
+    for ( int i = index[0]; i < index[0] + (int)size[0]; ++i ) {
       LabelImageType::IndexType index = {{ i, j, zSlice }};
       if ( binaryImage->GetPixel( index ) == 0 ) {
         binaryImage->SetPixel( index, OUTFLOW_LOCAL );
