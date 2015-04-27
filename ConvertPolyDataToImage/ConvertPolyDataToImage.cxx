@@ -112,7 +112,7 @@ int main( int argc, char* argv[] )
     {
     GetImageType( referenceImage, pixelType, componentType );
 
-    switch ( pixelType )
+    switch ( componentType )
       {
       case itk::ImageIOBase::UCHAR:
         result = GetReferenceInfo( referenceImage.c_str(), extent, origin, spacing,

@@ -152,7 +152,7 @@ int main( int argc, char * argv[] )
     {
     GetImageType(inputImage, pixelType, componentType);
     // This filter handles all types
-    switch( pixelType )
+    switch( componentType )
       {
       case itk::ImageIOBase::UCHAR:
         return DoIt( argc, argv, static_cast<unsigned char>(0) );
