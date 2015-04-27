@@ -6,7 +6,7 @@
 
 #include "itkLaplaceEquationSolverImageFilter.h"
 
-int main(int argc, char* argv[])
+int main(int, char*[])
 {
   typedef itk::Image< unsigned int, 3 > InputImageType;
   typedef itk::Image< float, 3 >        OutputImageType;
