@@ -311,19 +311,23 @@ int main( int argc, char* argv[] )
     switch ( componentType )
       {
       case itk::ImageIOBase::UCHAR:
-        result = DoIt( argc, argv, static_cast<unsigned char>(0) );
+        std::cerr << "unsigned char pixel type not supported\n";
+        result = EXIT_FAILURE;
         break;
       case itk::ImageIOBase::CHAR:
-        result = DoIt( argc, argv, static_cast<char>(0) );
+        std::cerr << "char pixel type not supported\n";
+        result = EXIT_FAILURE;
         break;
       case itk::ImageIOBase::USHORT:
-        result = DoIt( argc, argv, static_cast<unsigned short>(0) );
+        std::cerr << "unsigned short pixel type not supported\n";
+        result = EXIT_FAILURE;
         break;
       case itk::ImageIOBase::SHORT:
         result = DoIt( argc, argv, static_cast<short>(0) );
         break;
       case itk::ImageIOBase::UINT:
-        result = DoIt( argc, argv, static_cast<unsigned int>(0) );
+        std::cerr << "unsigned int pixel type not supported\n";
+        result = EXIT_FAILURE;
         break;
       case itk::ImageIOBase::INT:
         result = DoIt( argc, argv, static_cast<int>(0) );
