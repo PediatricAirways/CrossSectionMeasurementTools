@@ -22,7 +22,7 @@
       <name>segmentationImage</name>
       <label>Segmentation image</label>
       <longflag>--segmentationImage</longflag>
-      <channel>input</channel>      
+      <channel>input</channel>
       <default>None</default>
       <description><![CDATA[Segmentation image derived from the original CT image.]]></description>
     </image>
@@ -67,9 +67,9 @@
       <longflag>--noseSphereRadius</longflag>
       <description>The radius of the nose sphere.</description>
       <default>10.0</default>
-    </double> 
+    </double>
   </parameters>
-  
+
   <parameters>
     <label>Outflow cutoff parameters</label>
     <description><![CDATA[Axial image plane that serves as outflow boundary.]]></description>
