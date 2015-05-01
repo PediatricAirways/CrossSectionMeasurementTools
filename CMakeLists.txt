@@ -33,5 +33,6 @@ add_subdirectory(ExtractCrossSections)
 add_subdirectory(LaplaceBoundaryImageFilter)
 add_subdirectory(LaplaceSolution)
 add_subdirectory(LBMBoundaryConditions)
+add_subdirectory(ResampleImage)
 add_subdirectory(Utilities)
 

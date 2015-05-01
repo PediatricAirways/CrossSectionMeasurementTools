@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<executable>
+  <category>Filtering</category>
+  <title>Resample Image</title>
+  <description>
+    <![CDATA[Resamples an image to a desired spacing.]]>
+  </description>
+  <contributor>Cory Quammen</contributor>
+
+  <parameters>
+    <label>I/O</label>
+    <description>The input and output images</description>
+    <image>
+      <name>inputImage</name>
+      <label>Input image</label>
+      <longflag>--inputImage</longflag>
+      <channel>input</channel>
+      <default>None</default>
+      <description><![CDATA[Input image.]]></description>
+    </image>
+    <image>
+      <name>outputImage</name>
+      <label>Output image</label>
+      <longflag>--outputImage</longflag>
+      <channel>output</channel>
+      <default>None</default>
+      <description><![CDATA[Output image.]]></description>
+    </image>
+  </parameters>
+
+  <parameters>
+    <label>Resampling parameters</label>
+    <description>
+      <![CDATA[Parameters for resampling.]]>
+    </description>
+    <double-vector>
+      <name>spacing</name>
+      <label>Spacing</label>
+      <longflag>--spacing</longflag>
+      <description><![CDATA[Desired spacing of the output image.]]></description>
+      <default>-250</default>
+    </double-vector>
+    <string-enumeration>
+      <name>interpolator</name>
+      <label>Interpolator</label>
+      <longflag>--interpolator</longflag>
+      <default>Linear</default>
+      <element>Nearest</element>
+      <element>Linear</element>
+      <element>BSpline</element>
+      <description><![CDATA[Interpolator used for resampling.]]></description>
+    </string-enumeration>
+  </parameters>
+
+</executable>
