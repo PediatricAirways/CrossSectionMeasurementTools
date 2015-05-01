@@ -40,6 +40,16 @@
       <description><![CDATA[Desired spacing of the output image.]]></description>
       <default>-250</default>
     </double-vector>
+    <string-enumeration>
+      <name>interpolator</name>
+      <label>Interpolator</label>
+      <longflag>--interpolator</longflag>
+      <default>Linear</default>
+      <element>Nearest</element>
+      <element>Linear</element>
+      <element>BSpline</element>
+      <description><![CDATA[Interpolator used for resampling.]]></description>
+    </string-enumeration>
   </parameters>
 
 </executable>

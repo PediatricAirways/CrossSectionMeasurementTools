@@ -8,6 +8,8 @@
 #include <itkIdentityTransform.h>
 #include <itkImageFileReader.h>
 #include <itkImageFileWriter.h>
+#include <itkNearestNeighborInterpolateImageFunction.h>
+#include <itkLinearInterpolateImageFunction.h>
 #include <itkResampleImageFilter.h>
 
 // Use an anonymous namespace to keep class types and function names
@@ -69,15 +71,37 @@ int DoIt(int argc, char* argv[], T)
   typedef double InterpolatorPrecision;
   typedef itk::ResampleImageFilter< ImageType, ImageType, InterpolatorPrecision >
                                                                             ResampleFilterType;
-  typedef itk::BSplineInterpolateImageFunction< ImageType, double, double > InterpolatorType;
   typedef itk::IdentityTransform< double, ImageType::ImageDimension >       TransformType;
 
   typename ResampleFilterType::Pointer resampler = ResampleFilterType::New();
   typename TransformType::Pointer transform = TransformType::New();
   resampler->SetTransform( transform );
-  typename InterpolatorType::Pointer interpolator = InterpolatorType::New();
-  interpolator->SetSplineOrder( 3 );
-  resampler->SetInterpolator( interpolator );
+  if ( interpolator == "Nearest" )
+    {
+    typedef itk::NearestNeighborInterpolateImageFunction< ImageType, InterpolatorPrecision >
+      InterpolatorType;
+    typename InterpolatorType::Pointer interpolatorFunction = InterpolatorType::New();
+    resampler->SetInterpolator( interpolatorFunction );
+    }
+  else if ( interpolator == "Linear" )
+    {
+    typedef itk::LinearInterpolateImageFunction< ImageType, InterpolatorPrecision >
+      InterpolatorType;
+    typename InterpolatorType::Pointer interpolatorFunction = InterpolatorType::New();
+    resampler->SetInterpolator( interpolatorFunction );
+    }
+  else if ( interpolator == "BSpline" )
+    {
+    typedef itk::BSplineInterpolateImageFunction< ImageType, double, double > InterpolatorType;
+    typename InterpolatorType::Pointer interpolatorFunction = InterpolatorType::New();
+    interpolatorFunction->SetSplineOrder( 3 );
+    resampler->SetInterpolator( interpolatorFunction );
+    }
+  else
+    {
+    std::cerr << "Unknown interpolator '" << interpolator << "'\n";
+    return EXIT_FAILURE;
+    }
 
   typename ImageType::SpacingType resampleSpacing;
   resampleSpacing[0] = spacing[0];
