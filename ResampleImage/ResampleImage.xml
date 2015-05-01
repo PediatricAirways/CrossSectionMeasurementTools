@@ -13,16 +13,16 @@
     <image>
       <name>inputImage</name>
       <label>Input image</label>
-      <longflag>--inputImage</longflag>
       <channel>input</channel>
+      <index>0</index>
       <default>None</default>
       <description><![CDATA[Input image.]]></description>
     </image>
     <image>
       <name>outputImage</name>
       <label>Output image</label>
-      <longflag>--outputImage</longflag>
       <channel>output</channel>
+      <index>1</index>
       <default>None</default>
       <description><![CDATA[Output image.]]></description>
     </image>
@@ -38,7 +38,7 @@
       <label>Spacing</label>
       <longflag>--spacing</longflag>
       <description><![CDATA[Desired spacing of the output image.]]></description>
-      <default>-250</default>
+      <default>0.5,0.5,0.5</default>
     </double-vector>
     <string-enumeration>
       <name>interpolator</name>
