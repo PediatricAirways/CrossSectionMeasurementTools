@@ -13,24 +13,24 @@
     <image>
       <name>ctImage</name>
       <label>CT image</label>
-      <longflag>--ctImage</longflag>
       <channel>input</channel>
+      <index>0</index>
       <default>None</default>
       <description><![CDATA[Original CT image.]]></description>
     </image>
     <image>
       <name>segmentationImage</name>
       <label>Segmentation image</label>
-      <longflag>--segmentationImage</longflag>
       <channel>input</channel>
+      <index>1</index>
       <default>None</default>
       <description><![CDATA[Segmentation image derived from the original CT image.]]></description>
     </image>
     <image>
       <name>lbmImage</name>
       <label>LBM image</label>
-      <longflag>--lbmImage</longflag>
       <channel>output</channel>
+      <index>2</index>
       <default>None</default>
       <description><![CDATA[Segmentation image labeled for LBM simulation.]]></description>
     </image>
@@ -41,13 +41,13 @@
     <description>
       <![CDATA[Parameters that were used to create the segmentation image.]]>
     </description>
-    <integer>
+    <float>
       <name>segmentationThreshold</name>
       <label>Segmentation threshold</label>
       <longflag>--segmentationThreshold</longflag>
       <description><![CDATA[Threshold used to create the segmentation.]]></description>
       <default>-250</default>
-    </integer>
+    </float>
   </parameters>
 
   <parameters>
