@@ -70,18 +70,6 @@ AirwayLaplaceSolutionFilter< TInputImage, TOutputImage >
   boundaryFilter->SetTracheaVector( m_TrachVector );
   boundaryFilter->Update();
 
-  // TEMPORARY - write out boundary image
-  typedef itk::ImageFileWriter< TInputImage > WriterType;
-  typename WriterType::Pointer writer = WriterType::New();
-  writer->SetFileName("BOUNDARY_CONDITION_IMAGE.mha");
-  writer->SetInput( boundaryFilter->GetOutput() );
-  writer->Update();
-
-  typename WriterType::Pointer ccWriter = WriterType::New();
-  ccWriter->SetFileName("CONNECTED_COMPONENTS_IMAGE.mha");
-  ccWriter->SetInput( thresholdFilter->GetOutput() );
-  ccWriter->Update();
-
   // // Solve Laplace Equation
   typedef itk::LaplaceEquationSolverImageFilter< TInputImage, TOutputImage > LaplaceFilterType;
   typename LaplaceFilterType::Pointer heatFlowFilter = LaplaceFilterType::New();
@@ -91,7 +79,6 @@ AirwayLaplaceSolutionFilter< TInputImage, TOutputImage >
   heatFlowFilter->AddDirichletBoundaryCondition(    5, 1.0 );
   heatFlowFilter->SetInput( boundaryFilter->GetOutput()    );
   heatFlowFilter->Update();
-
 
   // Export Result
   typedef itk::ImageRegionIteratorWithIndex< TOutputImage > ImageIterator;
