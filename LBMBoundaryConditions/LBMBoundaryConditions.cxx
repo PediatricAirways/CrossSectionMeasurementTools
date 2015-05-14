@@ -12,6 +12,7 @@
 #include <itkImageFileReader.h>
 #include <itkImageFileWriter.h>
 #include <itkRelabelComponentImageFilter.h>
+#include <itkVTKImageIO.h>
 
 // Use an anonymous namespace to keep class types and function names
 // from colliding when module is used as shared object module.  Every
@@ -278,6 +279,16 @@ int DoIt(int argc, char* argv[], T)
   typename OutputWriter::Pointer writer = OutputWriter::New();
   writer->SetFileName( lbmImage.c_str() );
   writer->SetInput( paddedImage );
+
+  // Set up explicit IO if VTK file is requested
+  if ( lbmImage.substr(lbmImage.size()-5, 4) == ".vtk" )
+    {
+    typedef itk::VTKImageIO VTKIOType;
+    typename VTKIOType::Pointer io = VTKIOType::New();
+    io->SetFileTypeToASCII();
+    writer->SetImageIO( io );
+    }
+
   try
     {
     writer->Update();
