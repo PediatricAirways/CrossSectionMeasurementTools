@@ -281,7 +281,8 @@ int DoIt(int argc, char* argv[], T)
   writer->SetInput( paddedImage );
 
   // Set up explicit IO if VTK file is requested
-  if ( lbmImage.substr(lbmImage.size()-5, 4) == ".vtk" )
+  std::string extension = lbmImage.substr(lbmImage.size()-4, 4);
+  if ( extension == ".vtk" )
     {
     typedef itk::VTKImageIO VTKIOType;
     typename VTKIOType::Pointer io = VTKIOType::New();
