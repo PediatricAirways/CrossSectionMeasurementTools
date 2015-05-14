@@ -54,7 +54,7 @@
     <label>Nose sphere parameters</label>
     <description><![CDATA[Center and radius of nose sphere.]]></description>
 
-    <point multiple="false" coordinateSystem="lps">
+    <point multiple="false" coordinateSystem="ras">
       <name>noseSphereCenter</name>
       <label>Nose sphere center</label>
       <longflag>--noseSphereCenter</longflag>
@@ -74,7 +74,7 @@
     <label>Outflow cutoff parameters</label>
     <description><![CDATA[Axial image plane that serves as outflow boundary.]]></description>
 
-    <point multiple="false" coordinateSystem="lps">
+    <point multiple="false" coordinateSystem="ras">
       <name>outflowCutoff</name>
       <label>Outflow cutoff position</label>
       <longflag>--outflowCutoffPosition</longflag>
