@@ -81,8 +81,12 @@ int GetReferenceInfo( const char* fileName, int extent[6], double origin[3], dou
     spacing[i]      = inputSpacing[i];
     }
 
-  for ( int i = 0; i < 3; ++i )
+    for ( int i = 0; i < 3; ++i )
     {
+    if ( i == 0 )
+      {
+      std::cout << "Image bounds: ";
+      }
     std::cout << "(" << origin[i] << ", "
               << (origin[i] + (inputSize[i]-1)*inputSpacing[i]) << "), ";
     }
@@ -192,10 +196,10 @@ int main( int argc, char* argv[] )
 
   double bounds[6];
   transformedModel->GetOutput()->GetBounds(bounds);
-  std::cout << "bounds: "
-            << bounds[0] << ", " << bounds[1] << ", "
-            << bounds[2] << ", " << bounds[3] << ", "
-            << bounds[4] << ", " << bounds[5] << std::endl;
+  std::cout << "Model bounds: "
+            << "(" << bounds[0] << ", " << bounds[1] << "), "
+            << "(" << bounds[2] << ", " << bounds[3] << "), "
+            << "(" << bounds[4] << ", " << bounds[5] << ")" << std::endl;
 
   // Now that we have the reference image info, convert the model to
   // an image of that extent.
