@@ -206,7 +206,7 @@ int DoIt( int argc, char* argv[], T )
   threshold->Update();
 
   // Now create a set of 1000 contours along the heat flow image
-  vtkIdType numContours = 100;
+  vtkIdType numContours = 1000;
   vtkSmartPointer<vtkContourFilter> contourFilter =
     vtkSmartPointer<vtkContourFilter>::New();
   contourFilter->GenerateValues( numContours, 0.0, 1.0 );
