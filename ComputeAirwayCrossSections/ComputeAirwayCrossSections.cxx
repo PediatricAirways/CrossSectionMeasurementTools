@@ -30,6 +30,7 @@
 #include <vtkContourFilter.h>
 #include <vtkCutter.h>
 #include <vtkDataSetSurfaceFilter.h>
+#include <vtkDelimitedTextWriter.h>
 #include <vtkDoubleArray.h>
 #include <vtkFeatureEdges.h>
 #include <vtkFieldData.h>
@@ -44,6 +45,7 @@
 #include <vtkPolyLine.h>
 #include <vtkSmartPointer.h>
 #include <vtkStripper.h>
+#include <vtkTable.h>
 #include <vtkTransform.h>
 #include <vtkTransformFilter.h>
 #include <vtkTriangle.h>
@@ -71,6 +73,7 @@ namespace
     std::cout << "heat flow image                  = " << heatFlowImage << std::endl;
     std::cout << "segmented surface geometry       = " << segmentedSurface << std::endl;
     std::cout << "output cross section geometry    = " << outputCrossSections << std::endl;
+    std::cout << "output comma-delimited text file = " << outputCSVFile << std::endl;
 
     return EXIT_SUCCESS;
   }
@@ -203,7 +206,7 @@ int DoIt( int argc, char* argv[], T )
   threshold->Update();
 
   // Now create a set of 1000 contours along the heat flow image
-  vtkIdType numContours = 1000;
+  vtkIdType numContours = 100;
   vtkSmartPointer<vtkContourFilter> contourFilter =
     vtkSmartPointer<vtkContourFilter>::New();
   contourFilter->GenerateValues( numContours, 0.0, 1.0 );
@@ -558,6 +561,19 @@ int DoIt( int argc, char* argv[], T )
   pdWriter->SetFileName( outputCrossSections.c_str() );
   pdWriter->SetInputData( outputCopy );
   pdWriter->Write();
+
+  // Write CSV file
+  vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
+  table->AddColumn( centerOfMassInfo );
+  table->AddColumn( averageNormalInfo );
+  table->AddColumn( areaInfo );
+  table->AddColumn( perimeterInfo );
+
+  vtkSmartPointer<vtkDelimitedTextWriter> tableWriter =
+    vtkSmartPointer<vtkDelimitedTextWriter>::New();
+  tableWriter->SetInputData( table );
+  tableWriter->SetFileName( outputCSVFile.c_str() );
+  tableWriter->Write();
 
   return returnValue;
 }

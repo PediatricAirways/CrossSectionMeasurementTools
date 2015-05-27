@@ -34,6 +34,13 @@
       <index>2</index>
       <description><![CDATA[Output contours at sample points.]]></description>
     </geometry>
+    <file>
+      <name>outputCSVFile</name>
+      <label>Output CSV file</label>
+      <channel>output</channel>
+      <index>3</index>
+      <description><![CDATA[Output CSV file.]]></description>
+    </file>
   </parameters>
   <parameters advanced="true">
     <label>Rarely Used Parameters</label>
