@@ -20,12 +20,19 @@
       <description><![CDATA[Cross sections from airway data.]]></description>
     </geometry>
     <geometry>
-      <name>extractedCrossSections</name>
-      <label>Extracted cross sections</label>
+      <name>extractedCrossSectionGeometry</name>
+      <label>Extracted cross section geometry</label>
       <channel>output</channel>
       <index>2</index>
-      <description><![CDATA[Output cross sections at sample points.]]></description>
+      <description><![CDATA[Output cross section geometry nearest the query points.]]></description>
     </geometry>
+    <file>
+      <name>extractedCrossSectionCSV</name>
+      <label>Extracted cross section CSV file</label>
+      <channel>output</channel>
+      <index>3</index>
+      <description><![CDATA[Output measurements from cross sections nearest the query points.]]></description>
+    </file>
   </parameters>
   <parameters>
     <label>Query Points</label>

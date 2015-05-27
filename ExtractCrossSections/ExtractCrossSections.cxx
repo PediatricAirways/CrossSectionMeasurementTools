@@ -26,6 +26,7 @@
 #include <vtkContourFilter.h>
 #include <vtkCutter.h>
 #include <vtkDataSetSurfaceFilter.h>
+#include <vtkDelimitedTextWriter.h>
 #include <vtkDoubleArray.h>
 #include <vtkFieldData.h>
 #include <vtkGenericCell.h>
@@ -38,6 +39,7 @@
 #include <vtkSmartPointer.h>
 #include <vtkStringArray.h>
 #include <vtkStripper.h>
+#include <vtkTable.h>
 #include <vtkTransform.h>
 #include <vtkTransformFilter.h>
 #include <vtkTriangle.h>
@@ -221,11 +223,27 @@ int main( int argc, char* argv[] )
 
   outputCopy->SetFieldData( fieldData );
 
+  // Write contours
   vtkSmartPointer<vtkXMLPolyDataWriter> pdWriter =
     vtkSmartPointer<vtkXMLPolyDataWriter>::New();
-  pdWriter->SetFileName( extractedCrossSections.c_str() );
+  pdWriter->SetFileName( extractedCrossSectionGeometry.c_str() );
   pdWriter->SetInputData( outputCopy );
   pdWriter->Write();
+
+  // Write CSV file
+  vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
+  table->AddColumn( queryPtNameInfo );
+  table->AddColumn( queryPtIDInfo );
+  table->AddColumn( centerOfMassInfo );
+  table->AddColumn( averageNormalInfo );
+  table->AddColumn( areaInfo );
+  table->AddColumn( perimeterInfo );
+
+  vtkSmartPointer<vtkDelimitedTextWriter> tableWriter =
+    vtkSmartPointer<vtkDelimitedTextWriter>::New();
+  tableWriter->SetInputData( table );
+  tableWriter->SetFileName( extractedCrossSectionCSV.c_str() );
+  tableWriter->Write();
 
   return returnValue;
 }
