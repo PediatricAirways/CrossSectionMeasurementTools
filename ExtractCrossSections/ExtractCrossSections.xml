@@ -31,9 +31,15 @@
     <label>Query Points</label>
     <point multiple="true" coordinateSystem="ras">
       <name>queryPoints</name>
-      <label>Query Points</label>
+      <label>Query points</label>
       <longflag>--queryPoints</longflag>
       <description><![CDATA[Points that define which cross sections will be extracted.]]></description>
     </point>
+    <string-vector>
+      <name>queryPointNames</name>
+      <label>Query point names</label>
+      <longflag>--queryPointNames</longflag>
+      <description><![CDATA[Names for points that define which cross sections will be extracted.]]></description>
+    </string-vector>
   </parameters>
 </executable>

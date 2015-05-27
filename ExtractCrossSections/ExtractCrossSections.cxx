@@ -36,6 +36,7 @@
 #include <vtkPolyData.h>
 #include <vtkPolyDataConnectivityFilter.h>
 #include <vtkSmartPointer.h>
+#include <vtkStringArray.h>
 #include <vtkStripper.h>
 #include <vtkTransform.h>
 #include <vtkTransformFilter.h>
@@ -61,6 +62,7 @@ int main( int argc, char* argv[] )
   vtkPolyData* crossSectionsPD = crossSectionsReader->GetOutput();
 
   vtkFieldData* inputFieldData = crossSectionsPD->GetFieldData();
+
   vtkDoubleArray* inputCenterOfMassInfo =
     vtkDoubleArray::SafeDownCast( inputFieldData->GetArray( "center of mass" ) );
   if ( !inputCenterOfMassInfo )
@@ -102,6 +104,11 @@ int main( int argc, char* argv[] )
   queryPtIDInfo->SetName( "query point ID" );
   queryPtIDInfo->SetNumberOfComponents( 1 );
 
+  // Add query point names associated with cross sections
+  vtkSmartPointer<vtkStringArray> queryPtNameInfo = vtkSmartPointer<vtkStringArray>::New();
+  queryPtNameInfo->SetName( "query point name" );
+  queryPtNameInfo->SetNumberOfComponents(1);
+
   vtkSmartPointer<vtkIdTypeArray> contourIDInfo = vtkSmartPointer<vtkIdTypeArray>::New();
   contourIDInfo->SetName( "contour ID" );
   contourIDInfo->SetNumberOfComponents( 1 );
@@ -125,12 +132,12 @@ int main( int argc, char* argv[] )
   vtkSmartPointer<vtkAppendPolyData> appender =
     vtkSmartPointer<vtkAppendPolyData>::New();
 
-  for ( size_t inputPtId = 0; inputPtId < queryPoints.size(); ++inputPtId )
+  for ( size_t inputPtID = 0; inputPtID < queryPoints.size(); ++inputPtID )
     {
     double queryPoint[3], closestPoint[3];
-    queryPoint[0] = queryPoints[inputPtId][0];
-    queryPoint[1] = queryPoints[inputPtId][1];
-    queryPoint[2] = queryPoints[inputPtId][2];
+    queryPoint[0] = queryPoints[inputPtID][0];
+    queryPoint[1] = queryPoints[inputPtID][1];
+    queryPoint[2] = queryPoints[inputPtID][2];
     vtkIdType cellID;
     int subId;
     double dist2;
@@ -162,8 +169,11 @@ int main( int argc, char* argv[] )
     appender->AddInputConnection( surfaceFilter->GetOutputPort() );
 
     // Add field data entries
-    vtkIdType queryPtID = static_cast<vtkIdType>( inputPtId );
+    vtkIdType queryPtID = static_cast<vtkIdType>( inputPtID );
     queryPtIDInfo->InsertNextTupleValue( &queryPtID );
+
+    std::string queryPtName = queryPointNames[ inputPtID ];
+    queryPtNameInfo->InsertNextValue( queryPtName.c_str() );
 
     vtkIdType contourID = static_cast<vtkIdType>( nearestScalar );
     contourIDInfo->InsertNextTupleValue( &contourID );
@@ -202,6 +212,7 @@ int main( int argc, char* argv[] )
   // Add our field data
   vtkSmartPointer<vtkFieldData> fieldData = vtkSmartPointer<vtkFieldData>::New();
   fieldData->AddArray( queryPtIDInfo );
+  fieldData->AddArray( queryPtNameInfo );
   fieldData->AddArray( contourIDInfo );
   fieldData->AddArray( centerOfMassInfo );
   fieldData->AddArray( averageNormalInfo );
