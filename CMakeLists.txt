@@ -26,7 +26,7 @@ if (WIN32)
 endif()
 
 add_subdirectory(ComputeLaplaceSolution)
-add_subdirectory(ComputeAirwayCrossSections)
+add_subdirectory(ComputeCrossSections)
 add_subdirectory(RemoveSphere)
 add_subdirectory(ExtractCrossSections)
 add_subdirectory(LBMBoundaryConditions)

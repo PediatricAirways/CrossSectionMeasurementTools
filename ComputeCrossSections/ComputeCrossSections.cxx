@@ -17,7 +17,7 @@
 =============================================================================*/
 
 // Local includes
-#include "ComputeAirwayCrossSectionsCLP.h"
+#include "ComputeCrossSectionsCLP.h"
 
 #include <itkImage.h>
 #include <itkImageFileReader.h>

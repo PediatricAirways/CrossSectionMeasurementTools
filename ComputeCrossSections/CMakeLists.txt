@@ -1,7 +1,7 @@
-project(AirwayLaplaceSolutionFilter)
+project(ComputeCrossSections)
 cmake_minimum_required(VERSION 2.8.9)
 
-set(MODULE_NAME ComputeAirwayCrossSections)
+set(MODULE_NAME ComputeCrossSections)
 
 find_package(SlicerExecutionModel REQUIRED)
 include(${SlicerExecutionModel_USE_FILE})
