@@ -24,7 +24,7 @@
 #include <vtkSphere.h>
 #include <vtkSmartPointer.h>
 
-#include "../ITK/itkExcludeSphereImageFilter.h"
+#include "../ITK/itkRasterizeSphereImageFilter.h"
 #include "RemoveSphereCLP.h"
 
 // Use an anonymous namespace to keep class types and function names
@@ -67,14 +67,14 @@ int DoIt( int argc, char * argv[], T )
   typedef typename ImageType::PointType           PointType;
 
   // define the filter
-  typedef itk::ExcludeSphereImageFilter< ImageType >  ExcludeFilterType;
+  typedef itk::RasterizeSphereImageFilter< ImageType >  SphereFilterType;
 
   // Creation of Reader and Writer filters
   typename ReaderType::Pointer reader = ReaderType::New();
   typename WriterType::Pointer writer  = WriterType::New();
 
   // Make the filter
-  typename ExcludeFilterType::Pointer exclude = ExcludeFilterType::New();
+  typename SphereFilterType::Pointer sphere = SphereFilterType::New();
 
   PointType SphereCent;
 
@@ -82,18 +82,18 @@ int DoIt( int argc, char * argv[], T )
   SphereCent[1] = Center[1];
   SphereCent[2] = Center[2];
 \
-  exclude->SetSphereRadius( Radius );
-  exclude->SetSphereCenter( SphereCent );
+  sphere->SetSphereRadius( Radius );
+  sphere->SetSphereCenter( SphereCent );
 
   reader->SetFileName( inputImage.c_str() );
   writer->SetFileName( outputImage.c_str() );
   writer->SetUseCompression(1);
 
   // Setup the boundary method
-  exclude->SetInput(  reader->GetOutput() );
-  exclude->Update();
+  sphere->SetInput(  reader->GetOutput() );
+  sphere->Update();
   // Write the output
-  writer->SetInput( exclude->GetOutput() );
+  writer->SetInput( sphere->GetOutput() );
 
   try
     {

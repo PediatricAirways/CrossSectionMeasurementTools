@@ -1,7 +1,7 @@
-#ifndef itkExcludeSphereImageFilter_hxx_included
-#define itkExcludeSphereImageFilter_hxx_included
+#ifndef itkRasterizeSphereImageFilter_hxx_included
+#define itkRasterizeSphereImageFilter_hxx_included
  
-#include "itkExcludeSphereImageFilter.h"
+#include "itkRasterizeSphereImageFilter.h"
 #include "itkObjectFactory.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkImageRegionConstIteratorWithIndex.h"
@@ -12,15 +12,15 @@
 namespace itk
 {
 template<class ImageType>
-ExcludeSphereImageFilter<ImageType>
-::ExcludeSphereImageFilter()
+RasterizeSphereImageFilter<ImageType>
+::RasterizeSphereImageFilter()
 {
   this->m_SphereRadius = 0.0;
 }
 
  
 template<class ImageType>
-void ExcludeSphereImageFilter<ImageType>
+void RasterizeSphereImageFilter<ImageType>
 ::ThreadedGenerateData(const OutputImageRegionType& outputRegionForThread, ThreadIdType itkNotUsed(threadId))
 {
   typename ImageType::ConstPointer input = this->GetInput();
@@ -63,4 +63,4 @@ void ExcludeSphereImageFilter<ImageType>
  
 }// end namespace
  
-#endif //itkExcludeSphereImageFilter_hxx_included
+#endif //itkRasterizeSphereImageFilter_hxx_included

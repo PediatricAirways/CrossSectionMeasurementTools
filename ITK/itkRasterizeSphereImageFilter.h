@@ -1,21 +1,21 @@
-#ifndef itkExcludeSphereImageFilter_h_included
-#define itkExcludeSphereImageFilter_h_included
+#ifndef itkRasterizeSphereImageFilter_h_included
+#define itkRasterizeSphereImageFilter_h_included
  
 #include "itkImageToImageFilter.h"
  
 namespace itk
 {
-/** \class ExcludeSphereImageFilter
+/** \class RasterizeSphereImageFilter
  *
  * \ingroup ImageFilters
  */
 template< class ImageType>
-class ExcludeSphereImageFilter:public ImageToImageFilter< ImageType, ImageType >
+class RasterizeSphereImageFilter:public ImageToImageFilter< ImageType, ImageType >
 {
 public:
   /** Standard class typedefs. */
   typedef typename ImageType::PointType               PointType;
-  typedef ExcludeSphereImageFilter                    Self;
+  typedef RasterizeSphereImageFilter                    Self;
   typedef ImageToImageFilter< ImageType, ImageType >  Superclass;
   typedef typename Superclass::OutputImageRegionType  OutputImageRegionType;
   typedef SmartPointer< Self >                        Pointer;
@@ -25,7 +25,7 @@ public:
   itkNewMacro( Self );
  
   /** Run-time type information (and related methods). */
-  itkTypeMacro( ExcludeSphereImageFilter, ImageToImageFilter );
+  itkTypeMacro( RasterizeSphereImageFilter, ImageToImageFilter );
 
   itkSetMacro( SphereRadius, double );
 
@@ -33,14 +33,14 @@ public:
 
  
 protected:
-  ExcludeSphereImageFilter();
-  ~ExcludeSphereImageFilter(){}
+  RasterizeSphereImageFilter();
+  ~RasterizeSphereImageFilter(){}
  
   /** Does the real work. */
   virtual void ThreadedGenerateData( const OutputImageRegionType& outputRegionForThread, ThreadIdType threadId );
  
 private:
-  ExcludeSphereImageFilter( const Self & ); //purposely not implemented
+  RasterizeSphereImageFilter( const Self & ); //purposely not implemented
   void operator=( const Self & );  //purposely not implemented
  
   double                         m_SphereRadius;
@@ -50,7 +50,7 @@ private:
  
  
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "itkExcludeSphereImageFilter.hxx"
+#include "itkRasterizeSphereImageFilter.hxx"
 #endif
  
-#endif // itkExcludeSphereImageFilter_h_included
+#endif // itkRasterizeSphereImageFilter_h_included
