@@ -25,7 +25,7 @@ if (WIN32)
   add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 endif()
 
-add_subdirectory(AirwayLaplaceSolution)
+add_subdirectory(ComputeLaplaceSolution)
 add_subdirectory(ComputeAirwayCrossSections)
 add_subdirectory(RemoveSphere)
 add_subdirectory(ExtractCrossSections)

@@ -1,8 +1,8 @@
-project(AirwayLaplaceSolutionFilter)
+project(ComputeLaplaceSolution)
 cmake_minimum_required(VERSION 2.8.9)
 
 #-----------------------------------------------------------------------------
-set(MODULE_NAME AirwayLaplaceSolutionFilter)
+set(MODULE_NAME ComputeLaplaceSolution)
 
 find_package(Eigen3 REQUIRED)
 
