@@ -29,7 +29,7 @@ add_subdirectory(ComputeLaplaceSolution)
 add_subdirectory(ComputeCrossSections)
 add_subdirectory(RemoveSphere)
 add_subdirectory(ExtractCrossSections)
-add_subdirectory(LBMBoundaryConditions)
+add_subdirectory(ComputeLBMBoundaries)
 add_subdirectory(ResampleImage)
 add_subdirectory(Utilities)
 

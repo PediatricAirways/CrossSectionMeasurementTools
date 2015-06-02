@@ -3,7 +3,7 @@
 #endif
 
 #include "LBMNoseSphere.h"
-#include "LBMBoundaryConditionsCLP.h"
+#include "ComputeLBMBoundariesCLP.h"
 
 #include <itkAutoCropImageFilter.h>
 #include <itkBinaryThresholdImageFilter.h>

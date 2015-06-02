@@ -1,8 +1,8 @@
-project(LBMBoundaryConditions)
+project(ComputeLBMBoundaries)
 cmake_minimum_required(VERSION 2.8)
 
 #-----------------------------------------------------------------------------
-set(MODULE_NAME LBMBoundaryConditions)
+set(MODULE_NAME ComputeLBMBoundaries)
 
 #-----------------------------------------------------------------------------
 find_package(SlicerExecutionModel REQUIRED)

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <executable>
   <category>Filtering</category>
-  <title>Create Lattice-Boltzmann Image</title>
+  <title>Create Lattice-Boltzmann Boundaries Image</title>
   <description>
     <![CDATA[Creates an image for Sorin Mitran's lattice-Boltzmann CFD solver.]]>
   </description>
