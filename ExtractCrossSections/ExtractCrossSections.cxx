@@ -149,6 +149,8 @@ int main( int argc, char* argv[] )
     dist2Threshold *= dist2Threshold;
     if ( cellID < 0 || dist2 > dist2Threshold )
       {
+      std::cout << "For query point " << queryPointNames[ inputPtID ]
+                << ", nearest point dist^2 is " << dist2 << std::endl;
       continue;
       }
 
