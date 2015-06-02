@@ -27,8 +27,7 @@ endif()
 
 add_subdirectory(AirwayLaplaceSolution)
 add_subdirectory(ComputeAirwayCrossSections)
-add_subdirectory(ConvertPolyDataToImage)
-add_subdirectory(ExcludeMouth)
+add_subdirectory(RemoveSphere)
 add_subdirectory(ExtractCrossSections)
 add_subdirectory(LaplaceBoundaryImageFilter)
 add_subdirectory(LaplaceSolution)
@@ -36,3 +35,5 @@ add_subdirectory(LBMBoundaryConditions)
 add_subdirectory(ResampleImage)
 add_subdirectory(Utilities)
 
+# Unused utility to convert a polydata to a binary image
+add_subdirectory(ConvertPolyDataToImage)

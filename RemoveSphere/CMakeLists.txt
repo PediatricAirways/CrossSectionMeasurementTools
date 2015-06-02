@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 2.8.9)
 
-project(ExcludeSphere)
+project(RemoveSphere)
 
 #-----------------------------------------------------------------------------
-set(MODULE_NAME ExcludeSphere)
+set(MODULE_NAME RemoveSphere)
 
 #-----------------------------------------------------------------------------
 find_package(Eigen3 REQUIRED)
