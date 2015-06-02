@@ -1,14 +1,14 @@
 #ifndef itkRasterizeSphereImageFilter_hxx_included
 #define itkRasterizeSphereImageFilter_hxx_included
- 
-#include "itkRasterizeSphereImageFilter.h"
-#include "itkObjectFactory.h"
-#include "itkImageRegionIteratorWithIndex.h"
-#include "itkImageRegionConstIteratorWithIndex.h"
+
 #include "itkImage.h"
+#include "itkImageRegionConstIteratorWithIndex.h"
+#include "itkImageRegionIteratorWithIndex.h"
+#include "itkObjectFactory.h"
+#include "itkRasterizeSphereImageFilter.h"
 
 #include <cstdio>
- 
+
 namespace itk
 {
 template<class ImageType>
@@ -18,7 +18,7 @@ RasterizeSphereImageFilter<ImageType>
   this->m_SphereRadius = 0.0;
 }
 
- 
+
 template<class ImageType>
 void RasterizeSphereImageFilter<ImageType>
 ::ThreadedGenerateData(const OutputImageRegionType& outputRegionForThread, ThreadIdType itkNotUsed(threadId))
@@ -28,15 +28,15 @@ void RasterizeSphereImageFilter<ImageType>
 
   typename ImageType::PointType voxelPoint;
   typename ImageType::PixelType voxelValue;
- 
+
   itk::ImageRegionIteratorWithIndex<ImageType> out(output, outputRegionForThread);
   itk::ImageRegionConstIteratorWithIndex<ImageType> it(input, outputRegionForThread);
- 
+
   out.GoToBegin();
   it.GoToBegin();
 
   double dist;
-  double Radius2 = m_SphereRadius*m_SphereRadius;
+  double radius2 = m_SphereRadius*m_SphereRadius;
 
   while(!out.IsAtEnd())
   {
@@ -48,19 +48,19 @@ void RasterizeSphereImageFilter<ImageType>
       dist += (voxelPoint[i]-m_SphereCenter[i])*(voxelPoint[i]-m_SphereCenter[i]);
     }
 
-    if (dist < Radius2)
+    if (dist < radius2)
     {
       voxelValue = 0;
     }
 
     out.Set(voxelValue);
- 
+
     ++it;
     ++out;
   }
 
 }
- 
+
 }// end namespace
- 
+
 #endif //itkRasterizeSphereImageFilter_hxx_included

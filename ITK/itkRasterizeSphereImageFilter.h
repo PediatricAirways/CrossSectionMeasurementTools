@@ -7,6 +7,8 @@ namespace itk
 {
 /** \class RasterizeSphereImageFilter
  *
+ * \brief Rasterizes a spherical region in the input image with a given value.
+ *
  * \ingroup ImageFilters
  */
 template< class ImageType>
@@ -15,7 +17,7 @@ class RasterizeSphereImageFilter:public ImageToImageFilter< ImageType, ImageType
 public:
   /** Standard class typedefs. */
   typedef typename ImageType::PointType               PointType;
-  typedef RasterizeSphereImageFilter                    Self;
+  typedef RasterizeSphereImageFilter                  Self;
   typedef ImageToImageFilter< ImageType, ImageType >  Superclass;
   typedef typename Superclass::OutputImageRegionType  OutputImageRegionType;
   typedef SmartPointer< Self >                        Pointer;
