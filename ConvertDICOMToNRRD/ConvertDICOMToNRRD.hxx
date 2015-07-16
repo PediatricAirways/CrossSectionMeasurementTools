@@ -15,8 +15,8 @@
 //
 //  Authors: Schuyler Kylstra, Cory Quammen
 =============================================================================*/
-#ifndef DicomToNrrd_hxx_included
-#define DicomToNrrd_hxx_included
+#ifndef DICOMToNRRD_hxx_included
+#define DICOMToNRRD_hxx_included
 
 #include <algorithm>
 #include <cfloat>
@@ -38,7 +38,7 @@
 #include "ProgramArguments.h"
 
 
-namespace DicomToNrrd {
+namespace DICOMToNRRD {
 
   /*******************************************************************/
   /** Run the algorithm on an input image and write it to the output */
@@ -47,7 +47,7 @@ namespace DicomToNrrd {
   template< class TInput >
   int Execute( TInput * originalImage,
                itk::SmartPointer< TInput > & resampledInput,
-               DicomToNrrd::ProgramArguments args)
+               DICOMToNRRD::ProgramArguments args)
   {
     /* Typedefs */
     typedef typename TInput::PixelType TPixelType;

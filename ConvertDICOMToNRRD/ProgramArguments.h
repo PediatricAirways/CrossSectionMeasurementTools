@@ -16,15 +16,15 @@
 //  Authors: Schuyler Kylstra
 =============================================================================*/
 
-#ifndef DicomToNrrd_ProgramArguments_h_included
-#define DicomToNrrd_ProgramArguments_h_included
+#ifndef DICOMToNRRD_ProgramArguments_h_included
+#define DICOMToNRRD_ProgramArguments_h_included
 
-namespace DicomToNrrd {
+namespace DICOMToNRRD {
 
 /** Simple container class for holding program arguments.
  *
  * For information about what each member is, please see
- * DicomToNrrd.xml */
+ * DICOMToNRRD.xml */
 class ProgramArguments {
 public:
   std::string dicomDir;
@@ -32,7 +32,7 @@ public:
   std::string outputImage;
 };
 
-} // end namespace DicomToNrrd
+} // end namespace DICOMToNRRD
 
 
 #endif 

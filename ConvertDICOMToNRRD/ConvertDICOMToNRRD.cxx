@@ -20,15 +20,15 @@
 #include <string>
 
 /* Local includes */
-#include "DicomToNrrdCLP.h"
-#include "DicomToNrrdConfig.h"
-#include "DicomToNrrd.hxx"
+#include "ConvertDICOMToNRRDCLP.h"
+#include "ConvertDICOMToNRRDConfig.h"
+#include "ConvertDICOMToNRRD.hxx"
 #include "ProgramArguments.h"
 
 #include <itkImage.h>
 #include <itkImageFileReader.h>
 
-namespace DicomToNrrd {
+namespace DICOMToNRRD {
 
   /*******************************************************************/
   /** Query the image type. */
@@ -65,7 +65,7 @@ namespace DicomToNrrd {
       std::cerr << excep << std::endl;
     }
   }
-} // end namespace DicomToNrrd
+} // end namespace DICOMToNRRD
 
 /*******************************************************************/
 int main( int argc, char * argv[] )
@@ -73,7 +73,7 @@ int main( int argc, char * argv[] )
 
   PARSE_ARGS;
 
-  DicomToNrrd::ProgramArguments args;
+  DICOMToNRRD::ProgramArguments args;
   args.dicomDir    = dicomDir;
   args.outputImage = outputImage;
 
@@ -83,58 +83,58 @@ int main( int argc, char * argv[] )
   int ret = EXIT_FAILURE;
 
   try {
-    DicomToNrrd::GetImageType(dicomDir, inputComponentType);
+    DICOMToNRRD::GetImageType(dicomDir, inputComponentType);
     (void) inputPixelType;
 
     switch( inputComponentType ) {
 #if defined(SUPPORT_UCHAR_PIXEL)
       case itk::ImageIOBase::UCHAR:
-        ret = DicomToNrrd::ExecuteFromFile( args, static_cast<unsigned char>(0) );
+        ret = DICOMToNRRD::ExecuteFromFile( args, static_cast<unsigned char>(0) );
         break;
 #endif
 #if defined(SUPPORT_CHAR_PIXEL)
       case itk::ImageIOBase::CHAR:
-        ret = DicomToNrrd::ExecuteFromFile( args, static_cast<char>(0) );
+        ret = DICOMToNRRD::ExecuteFromFile( args, static_cast<char>(0) );
         break;
 #endif
 #if defined(SUPPORT_USHORT_PIXEL)
       case itk::ImageIOBase::USHORT:
-        ret = DicomToNrrd::ExecuteFromFile( args, static_cast<unsigned short>(0) );
+        ret = DICOMToNRRD::ExecuteFromFile( args, static_cast<unsigned short>(0) );
         break;
 #endif
 #if defined(SUPPORT_SHORT_PIXEL)
       case itk::ImageIOBase::SHORT:
-        ret = DicomToNrrd::ExecuteFromFile( args, static_cast<short>(0) );
+        ret = DICOMToNRRD::ExecuteFromFile( args, static_cast<short>(0) );
         break;
 #endif
 #if defined(SUPPORT_UINT_PIXEL)
       case itk::ImageIOBase::UINT:
-        ret = DicomToNrrd::ExecuteFromFile( args, static_cast<unsigned int>(0) );
+        ret = DICOMToNRRD::ExecuteFromFile( args, static_cast<unsigned int>(0) );
         break;
 #endif
 #if defined(SUPPORT_INT_PIXEL)
       case itk::ImageIOBase::INT:
-        ret = DicomToNrrd::ExecuteFromFile( args, static_cast<int>(0) );
+        ret = DICOMToNRRD::ExecuteFromFile( args, static_cast<int>(0) );
         break;
 #endif
 #if defined(SUPPORT_ULONG_PIXEL)
       case itk::ImageIOBase::ULONG:
-        ret = DicomToNrrd::ExecuteFromFile( args, static_cast<unsigned long>(0) );
+        ret = DICOMToNRRD::ExecuteFromFile( args, static_cast<unsigned long>(0) );
         break;
 #endif
 #if defined(SUPPORT_LONG_PIXEL)
       case itk::ImageIOBase::LONG:
-        ret = DicomToNrrd::ExecuteFromFile( args, static_cast<long>(0) );
+        ret = DICOMToNRRD::ExecuteFromFile( args, static_cast<long>(0) );
         break;
 #endif
 #if defined(SUPPORT_FLOAT_PIXEL)
       case itk::ImageIOBase::FLOAT:
-        ret = DicomToNrrd::ExecuteFromFile( args, static_cast<float>(0) );
+        ret = DICOMToNRRD::ExecuteFromFile( args, static_cast<float>(0) );
         break;
 #endif
 #if defined(SUPPORT_DOUBLE_PIXEL)
       case itk::ImageIOBase::DOUBLE:
-        ret = DicomToNrrd::ExecuteFromFile( args, static_cast<double>(0) );
+        ret = DICOMToNRRD::ExecuteFromFile( args, static_cast<double>(0) );
         break;
 #endif
       case itk::ImageIOBase::UNKNOWNCOMPONENTTYPE:

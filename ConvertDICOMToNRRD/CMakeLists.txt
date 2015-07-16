@@ -3,7 +3,9 @@ if(NOT DEFINED CMAKE_MACOSX_RPATH)
   set(CMAKE_MACOSX_RPATH OFF)
 endif()
 
-project(DicomToNrrd)
+set(MODULE_NAME ConvertDICOMToNRRD)
+
+project(ConvertDICOMToNRRD)
 
 # Find packages
 find_package(ITK 4 REQUIRED)
@@ -31,12 +33,12 @@ option( SUPPORT_DOUBLE_PIXEL "Build with support for input images with double pi
 
 #Compatibility between slicer and the executable
 set(SLICER_ITK_DIFFERENT true CACHE BOOL "Check if compiling with an ITK build different from the one used by Slicer")
-configure_file(${DicomToNrrd_SOURCE_DIR}/DicomToNrrdConfig.h.in
-               ${DicomToNrrd_BINARY_DIR}/DicomToNrrdConfig.h)
+configure_file(${ConvertDICOMToNRRD_SOURCE_DIR}/ConvertDICOMToNRRDConfig.h.in
+               ${ConvertDICOMToNRRD_BINARY_DIR}/ConvertDICOMToNRRDConfig.h)
 
 include_directories(
-  ${DicomToNrrd_SOURCE_DIR}
-  ${DicomToNrrd_SOURCE_DIR}/Code
+  ${DICOMToNRRD_SOURCE_DIR}
+  ${DICOMToNRRD_SOURCE_DIR}/Code
   ${ADDITIONAL_VTK_INCLUDE_DIRS}
 )
 
@@ -44,7 +46,7 @@ set(CMAKE_SHARED_LINKER_FLAGS -DDLL_EXPORT)
 
 #Finally the projects
 SEMMacroBuildCLI(
-  NAME ${PROJECT_NAME}
+  NAME ${MODULE_NAME}
   TARGET_LIBRARIES ${ITK_LIBRARIES}
                    ${VTK_LIBRARIES}
   EXECUTABLE_ONLY
