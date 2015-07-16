@@ -27,6 +27,7 @@ endif()
 
 add_subdirectory(ComputeLaplaceSolution)
 add_subdirectory(ComputeCrossSections)
+add_subdirectory(ConvertDICOMToNRRD)
 add_subdirectory(RemoveSphere)
 add_subdirectory(ExtractCrossSections)
 add_subdirectory(ComputeLBMBoundaries)

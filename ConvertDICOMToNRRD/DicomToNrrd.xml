@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<executable>
+    <category>Filtering</category>
+    <title>Dicom To Nrrd</title>
+    <description><![CDATA[Semi-automatically extracts the upper airway from a CT image.]]></description>
+    <version>1.0</version>
+    <documentation-url>TODO</documentation-url>
+    <license>Apache 2.0</license>
+    <contributor>Marc Niethammer, Yi Hong, Johan Andruejol, Cory Quammen</contributor>
+    <acknowledgements><![CDATA[TODO]]></acknowledgements>
+    <parameters>
+        <label>Input/Output</label>
+        <description><![CDATA[Input/Output Parameters]]></description>
+        <directory>
+            <name>dicomDir</name>
+            <channel>input</channel>
+            <index>0</index>
+            <default>None</default>
+            <label>Input Directory of Dicom Images</label>
+            <description><![CDATA[Location of Dicom input data]]></description>
+        </directory>
+        <image>
+            <name>outputImage</name>
+            <channel>output</channel>
+            <index>1</index>
+            <default>None</default>
+            <label>Output Image</label>
+            <description><![CDATA[Output Image Path]]></description>
+        </image>
+    </parameters>
+</executable>
