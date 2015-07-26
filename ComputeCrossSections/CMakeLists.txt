@@ -16,12 +16,16 @@ include(${VTK_USE_FILE})
 # Slicer doesn't enable ITK's VtkGlue module, so we add the include
 # directory manually here.
 load_cache( "${ITK_DIR}" READ_WITH_PREFIX My ITK_SOURCE_DIR )
-include_directories( ${MyITK_SOURCE_DIR}/Modules/Bridge/VtkGlue/include )
+include_directories( ${MyITK_SOURCE_DIR}/Modules/Bridge/VtkGlue/include
+  ${CMAKE_CURRENT_SOURCE_DIR})
 
 ### CLI module that extracts the cross sections closest to a set of
 ### query points and saves them as a poly data.
 SEMMacroBuildCLI(
   NAME ${MODULE_NAME}
+  ADDITIONAL_SRCS
+    vtkContourCompleter.h
+    vtkContourCompleter.cxx
   TARGET_LIBRARIES
     ${ITK_LIBRARIES}
     ${VTK_LIBRARIES}

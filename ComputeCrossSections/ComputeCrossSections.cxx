@@ -27,7 +27,10 @@
 #include <vtkCellArray.h>
 #include <vtkCellData.h>
 #include <vtkCleanPolyData.h>
+#include <vtkConnectivityFilter.h>
+#include <vtkContourCompleter.h>
 #include <vtkContourFilter.h>
+#include <vtkContourTriangulator.h>
 #include <vtkCutter.h>
 #include <vtkDataSetSurfaceFilter.h>
 #include <vtkDelimitedTextWriter.h>
@@ -36,12 +39,12 @@
 #include <vtkFieldData.h>
 #include <vtkLine.h>
 #include <vtkMassProperties.h>
-#include <vtkOctreePointLocator.h>
 #include <vtkPlane.h>
 #include <vtkPointData.h>
 #include <vtkPoints.h>
 #include <vtkPolyData.h>
 #include <vtkPolyDataReader.h>
+#include <vtkPolyDataConnectivityFilter.h>
 #include <vtkPolyLine.h>
 #include <vtkSmartPointer.h>
 #include <vtkStripper.h>
@@ -95,6 +98,10 @@ namespace
     pixelType = imageReader->GetImageIO()->GetPixelType();
     componentType = imageReader->GetImageIO()->GetComponentType();
   }
+
+  /*******************************************************************/
+  /**  */
+  /*******************************************************************/
 
 } // end anonymous namespace
 
@@ -199,19 +206,23 @@ int DoIt( int argc, char* argv[], T )
   itk2vtkFilter->Update();
 
   // Threshold the image file to get rid of the NaNs
+  std::cout << "Thresholding... ";
   vtkSmartPointer<vtkThreshold> threshold = vtkSmartPointer<vtkThreshold>::New();
   threshold->ThresholdBetween(0.0, 1.0);
   threshold->AllScalarsOff();
   threshold->SetInputData( itk2vtkFilter->GetOutput() );
   threshold->Update();
+  std::cout << "done\n";
 
   // Now create a set of 1000 contours along the heat flow image
+  std::cout << "Creating contours... ";
   vtkIdType numContours = 1000;
   vtkSmartPointer<vtkContourFilter> contourFilter =
     vtkSmartPointer<vtkContourFilter>::New();
   contourFilter->GenerateValues( numContours, 0.0, 1.0 );
   contourFilter->SetInputConnection( threshold->GetOutputPort() );
   contourFilter->Update();
+  std::cout << "done\n";
 
   // Point data with heat flow values
   vtkSmartPointer<vtkDoubleArray> heatValues = vtkSmartPointer<vtkDoubleArray>::New();
@@ -249,9 +260,14 @@ int DoIt( int argc, char* argv[], T )
   vtkSmartPointer<vtkAppendPolyData> appender =
     vtkSmartPointer<vtkAppendPolyData>::New();
 
-  for ( vtkIdType contourID = 0; contourID < numContours; ++contourID )
+  bool firstCrossSection = true;
+  double previousCenterlinePoint[3] = {0.0, 0.0, 0.0};
+
+  for ( vtkIdType contourID = numContours-1; contourID >= 0; --contourID )
     {
     double scalar = contourFilter->GetValue( contourID );
+
+    std::cout << "Processing contour " << contourID << " - " << scalar <<std::endl;
 
     // Extract contour for the nearest scalar value
     vtkSmartPointer<vtkThreshold> scalarThreshold = vtkSmartPointer<vtkThreshold>::New();
@@ -262,16 +278,25 @@ int DoIt( int argc, char* argv[], T )
     vtkSmartPointer<vtkDataSetSurfaceFilter> surfaceFilter =
       vtkSmartPointer<vtkDataSetSurfaceFilter>::New();
     surfaceFilter->SetInputConnection( scalarThreshold->GetOutputPort() );
-    surfaceFilter->Update();
 
-    vtkSmartPointer<vtkOctreePointLocator> octree =
-      vtkSmartPointer<vtkOctreePointLocator>::New();
-    octree->SetDataSet( surfaceFilter->GetOutput() );
-    octree->BuildLocator();
+    vtkSmartPointer<vtkPolyDataConnectivityFilter> contourConnected =
+      vtkSmartPointer<vtkPolyDataConnectivityFilter>::New();
+    if ( firstCrossSection )
+      {
+      contourConnected->SetExtractionModeToAllRegions();
+      firstCrossSection = false;
+      }
+    else
+      {
+      contourConnected->SetExtractionModeToClosestPointRegion();
+      contourConnected->SetClosestPoint(previousCenterlinePoint);
+      }
+    contourConnected->SetInputConnection(surfaceFilter->GetOutputPort());
+    contourConnected->Update();
 
     // Center of mass of surface elements is the average of the
     // centers of the surface triangles weighted by the triangle area.
-    vtkPolyData* pd = surfaceFilter->GetOutput();
+    vtkPolyData* pd = contourConnected->GetOutput();
 
     vtkCellArray* ca = pd->GetPolys();
 
@@ -336,16 +361,23 @@ int DoIt( int argc, char* argv[], T )
     cutter->SetValue( 0, 0.0 );
     cutter->SetInputConnection( transformedSegmentationSurface->GetOutputPort() );
 
-    // Convert planar cut into line strips
-    vtkSmartPointer<vtkStripper> stripper = vtkSmartPointer<vtkStripper>::New();
-    stripper->SetInputConnection( cutter->GetOutputPort() );
-    stripper->Update();
+    vtkSmartPointer<vtkContourCompleter> completer =
+      vtkSmartPointer<vtkContourCompleter>::New();
+    completer->SetInputConnection( cutter->GetOutputPort() );
 
-    // Convert the poly line from the cut to a polygon
-    vtkPolyData* cut = stripper->GetOutput();
+    vtkSmartPointer<vtkContourTriangulator> triangulate =
+      vtkSmartPointer<vtkContourTriangulator>::New();
+    triangulate->TriangulationErrorDisplayOn();
+    triangulate->SetInputConnection( completer->GetOutputPort() );
 
-    vtkIdType numCells = cut->GetNumberOfCells();
+    vtkSmartPointer<vtkPolyDataConnectivityFilter> connected =
+      vtkSmartPointer<vtkPolyDataConnectivityFilter>::New();
+    connected->SetExtractionModeToClosestPointRegion();
+    connected->SetClosestPoint( previousCenterlinePoint );
+    connected->SetInputConnection( triangulate->GetOutputPort() );
+    connected->Update();
 
+    vtkIdType numCells = connected->GetOutput()->GetNumberOfPolys();
     if ( numCells == 0 )
       {
       double zero = 0.0;
@@ -354,53 +386,9 @@ int DoIt( int argc, char* argv[], T )
       continue;
       }
 
-    vtkSmartPointer<vtkAppendPolyData> crossSectionAppender =
-      vtkSmartPointer<vtkAppendPolyData>::New();
-    for ( vtkIdType cellId = 0; cellId < numCells; ++cellId )
-      {
-      vtkCell* polyLine = cut->GetCell( cellId ); // Assumes one cut object
-      vtkSmartPointer<vtkPolyData> polygon = vtkSmartPointer<vtkPolyData>::New();
-      polygon->Allocate();
-      polygon->SetPoints( cut->GetPoints() );
-      polygon->InsertNextCell( VTK_POLYGON, polyLine->GetPointIds() );
-
-      vtkSmartPointer<vtkCleanPolyData> cleaner = vtkSmartPointer<vtkCleanPolyData>::New();
-      cleaner->SetInputData( polygon );
-
-      vtkSmartPointer<vtkTriangleFilter> triangulate =
-        vtkSmartPointer<vtkTriangleFilter>::New();
-      triangulate->SetInputConnection( cleaner->GetOutputPort() );
-      triangulate->Update();
-
-      vtkPolyData* planarRegion = triangulate->GetOutput();
-
-      double dist2Threshold = crossSectionDistanceThreshold * crossSectionDistanceThreshold;
-      double minDist2ToContour = DBL_MAX;
-      for ( vtkIdType cutPtId = 0; cutPtId < planarRegion->GetNumberOfPoints(); ++cutPtId )
-        {
-        double cutPt[3];
-        planarRegion->GetPoint( cutPtId, cutPt );
-        double candidateDist2 = DBL_MAX;
-        vtkIdType nearestId =
-          octree->FindClosestPoint( cutPt[0], cutPt[1], cutPt[2], candidateDist2 );
-        if ( nearestId >= 0 && candidateDist2 < minDist2ToContour )
-          {
-          minDist2ToContour = candidateDist2;
-          }
-        }
-
-      if ( minDist2ToContour > dist2Threshold )
-        {
-        // This region is too far away from the contour; skip it
-        continue;
-        }
-
-      crossSectionAppender->AddInputConnection( triangulate->GetOutputPort() );
-      }
-
-    appender->AddInputConnection( crossSectionAppender->GetOutputPort() );
-    crossSectionAppender->Update();
-    pd = crossSectionAppender->GetOutput();
+    appender->AddInputConnection( connected->GetOutputPort() );
+    connected->Update();
+    pd = connected->GetOutput();
 
     // Add heat values to point array
     for ( vtkIdType ptId = 0; ptId < pd->GetNumberOfPoints(); ++ptId )
@@ -445,6 +433,10 @@ int DoIt( int argc, char* argv[], T )
       centerOfMass[0] /= totalArea;
       centerOfMass[1] /= totalArea;
       centerOfMass[2] /= totalArea;
+
+      previousCenterlinePoint[0] = centerOfMass[0];
+      previousCenterlinePoint[1] = centerOfMass[1];
+      previousCenterlinePoint[2] = centerOfMass[2];
       }
     else
       {
@@ -464,7 +456,7 @@ int DoIt( int argc, char* argv[], T )
 
     vtkSmartPointer<vtkMassProperties> massProperties =
       vtkSmartPointer<vtkMassProperties>::New();
-    massProperties->SetInputConnection( crossSectionAppender->GetOutputPort() );
+    massProperties->SetInputConnection( connected->GetOutputPort() );
     massProperties->Update();
     double surfaceArea = massProperties->GetSurfaceArea();
 
@@ -476,7 +468,7 @@ int DoIt( int argc, char* argv[], T )
     edges->NonManifoldEdgesOff();
     edges->ManifoldEdgesOff();
     edges->ColoringOff();
-    edges->SetInputConnection( crossSectionAppender->GetOutputPort() );
+    edges->SetInputConnection( connected->GetOutputPort() );
     edges->Update();
 
     vtkPolyData* edgeOutput = edges->GetOutput();
