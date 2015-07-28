@@ -383,6 +383,13 @@ int DoIt( int argc, char* argv[], T )
       double zero = 0.0;
       areaInfo->SetTupleValue( contourID, &zero );
       perimeterInfo->SetTupleValue( contourID, &zero );
+
+      // Assume contourID + 1 is valid...
+      centerOfMassInfo->GetTupleValue( contourID + 1, centerOfMass );
+      centerOfMassInfo->SetTupleValue( contourID, centerOfMass );
+      averageNormalInfo->GetTupleValue( contourID + 1, averageNormal );
+      averageNormalInfo->SetTupleValue( contourID, averageNormal );
+
       continue;
       }
 
