@@ -46,8 +46,7 @@ namespace DICOMToNRRD {
   /*******************************************************************/
   template< class TInput >
   int Execute( TInput * originalImage,
-               itk::SmartPointer< TInput > & resampledInput,
-               DICOMToNRRD::ProgramArguments args)
+               itk::SmartPointer< TInput > & resampledInput)
   {
     /* Typedefs */
     typedef typename TInput::PixelType TPixelType;
@@ -217,7 +216,6 @@ namespace DICOMToNRRD {
       }
 
     typedef itk::ImageSeriesReader< InputImageType > ReaderType;
-    typedef std::vector< std::string >               SeriesIdContainer;
     typedef itk::ImageFileWriter< InputImageType >   WriterType;
 
     typename ReaderType::Pointer reader = ReaderType::New();
@@ -253,7 +251,7 @@ namespace DICOMToNRRD {
 
     // Run the algorithm
     typename InputImageType::Pointer resampledInput;
-    int result = Execute( reader->GetOutput(), resampledInput, args );
+    int result = Execute( reader->GetOutput(), resampledInput );
     if ( result != EXIT_SUCCESS ) {
       return result;
     }
