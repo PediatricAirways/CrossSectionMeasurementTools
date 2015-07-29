@@ -1,6 +1,7 @@
 #include "vtkContourCompleter.h"
 
 #include <vtkAppendPolyData.h>
+#include <vtkCellArray.h>
 #include <vtkDataSetSurfaceFilter.h>
 #include <vtkIdList.h>
 #include <vtkInformation.h>
@@ -67,17 +68,21 @@ int vtkContourCompleter::RequestData(vtkInformation*        vtkNotUsed(request),
       vtkSmartPointer<vtkDataSetSurfaceFilter>::New();
     surfaceFilter->SetInputConnection( scalarThreshold->GetOutputPort() );
 
-    vtkSmartPointer<vtkStripper> stripper =
-      vtkSmartPointer<vtkStripper>::New();
+    vtkSmartPointer<vtkStripper> stripper = vtkSmartPointer<vtkStripper>::New();
     stripper->JoinContiguousSegmentsOn();
     stripper->SetInputConnection( surfaceFilter->GetOutputPort() );
     stripper->Update();
 
-    vtkSmartPointer<vtkPolyData> connectedPD = vtkSmartPointer<vtkPolyData>::New();
-    connectedPD->DeepCopy( stripper->GetOutput() );
+    vtkSmartPointer<vtkPoints> newPoints = vtkSmartPointer<vtkPoints>::New();
+    newPoints->DeepCopy( stripper->GetOutput()->GetPoints() );
+
+    vtkSmartPointer<vtkPolyData> completedPD = vtkSmartPointer<vtkPolyData>::New();
+    completedPD->SetPoints( newPoints );
+    vtkSmartPointer<vtkCellArray> cellArray = vtkSmartPointer<vtkCellArray>::New();
+    completedPD->SetLines( cellArray );
 
     vtkSmartPointer<vtkIdList> pts = vtkSmartPointer<vtkIdList>::New();
-    connectedPD->GetCellPoints(0, pts);
+    stripper->GetOutput()->GetCellPoints(0, pts);
 
     vtkIdType firstPt = pts->GetId(0);
     vtkIdType lastPt = pts->GetId( pts->GetNumberOfIds()-1 );
@@ -87,9 +92,9 @@ int vtkContourCompleter::RequestData(vtkInformation*        vtkNotUsed(request),
       pts->InsertNextId(firstPt);
       }
 
-    connectedPD->ReplaceCell( 0, pts->GetNumberOfIds(), pts->GetPointer(0) );
+    completedPD->InsertNextCell( VTK_POLY_LINE, pts->GetNumberOfIds(), pts->GetPointer(0) );
     
-    appender->AddInputData(connectedPD);
+    appender->AddInputData( completedPD );
     }
 
   appender->Update();

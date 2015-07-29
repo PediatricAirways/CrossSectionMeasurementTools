@@ -2,7 +2,7 @@
 <executable>
   <category>Filtering</category>
   <title>Compute Cross Sections</title>
-  <description><![CDATA[Measures cross section areas from airway data.]]></description>
+  <description><![CDATA[Compute cross sections from heat flow contours and segmented geometry.]]></description>
   <version>1.0</version>
   <documentation-url>TODO</documentation-url>
   <license>Apache 2.0</license>
@@ -11,14 +11,14 @@
   <parameters>
     <label>Input/Output</label>
     <description><![CDATA[Input/Output Parameters]]></description>
-    <image>
-      <name>heatFlowImage</name>
-      <label>Heat flow image</label>
+    <file>
+      <name>heatFlowContours</name>
+      <label>Heat flow contours</label>
       <channel>input</channel>
       <index>0</index>
       <default>None</default>
-      <description><![CDATA[Input heat flow image from segmentation.]]></description>
-    </image>
+      <description><![CDATA[Input heat flow contours.]]></description>
+    </file>
     <geometry>
       <name>segmentedSurface</name>
       <label>Segmented model</label>

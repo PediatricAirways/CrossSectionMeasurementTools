@@ -37,6 +37,7 @@
 #include <vtkDoubleArray.h>
 #include <vtkFeatureEdges.h>
 #include <vtkFieldData.h>
+#include <vtkFloatArray.h>
 #include <vtkLine.h>
 #include <vtkMassProperties.h>
 #include <vtkPlane.h>
@@ -58,6 +59,7 @@
 #include <vtkXMLPolyDataReader.h>
 #include <vtkXMLPolyDataWriter.h>
 
+#include <set>
 
 namespace
 {
@@ -73,7 +75,7 @@ namespace
     std::cout << "Parameter settings:" << std::endl;
     std::cout << "-------------------------------------------------------------------------------"
               << std::endl;
-    std::cout << "heat flow image                  = " << heatFlowImage << std::endl;
+    std::cout << "heat flow contours               = " << heatFlowContours << std::endl;
     std::cout << "segmented surface geometry       = " << segmentedSurface << std::endl;
     std::cout << "output cross section geometry    = " << outputCrossSections << std::endl;
     std::cout << "output comma-delimited text file = " << outputCSVFile << std::endl;
@@ -109,26 +111,36 @@ namespace
 /*******************************************************************/
 /* Main function                                                   */
 /*******************************************************************/
-template< typename T >
-int DoIt( int argc, char* argv[], T )
+int main( int argc, char* argv[] )
 {
   PARSE_ARGS;
 
   int returnValue = EXIT_SUCCESS;
 
-  typedef T TPixelType;
-  const unsigned char DIMENSION = 3;
+  vtkSmartPointer<vtkXMLPolyDataReader> contourReader =
+    vtkSmartPointer<vtkXMLPolyDataReader>::New();
+  contourReader->SetFileName( heatFlowContours.c_str() );
+  contourReader->Update();
+  vtkPointData* contourPD = contourReader->GetOutput()->GetPointData();
+  vtkFloatArray* heatArray = vtkFloatArray::SafeDownCast(contourPD->GetArray("scalars"));
+  if (!heatArray)
+    {
+    std::cerr << "'scalars' point data array not available in contours file '"
+              << heatFlowContours << "'\n";
+    return EXIT_FAILURE;
+    }
 
-  typedef itk::Image< TPixelType, DIMENSION > HeatFlowImageType;
+  // Create the set of heat values in the contours
+  std::set<float> contourValueSet;
+  for ( vtkIdType id = 0; id < heatArray->GetNumberOfTuples(); ++id )
+    {
+    float value = heatArray->GetValue( id );
+    contourValueSet.insert( value );
+    }
+  std::vector<float> contourValues( contourValueSet.begin(), contourValueSet.end() );
 
-  // Read heatflow image
-  typedef itk::ImageFileReader< HeatFlowImageType > HeatFlowReaderType;
-  typename HeatFlowReaderType::Pointer heatFlowReader = HeatFlowReaderType::New();
-  heatFlowReader->SetFileName( heatFlowImage.c_str() );
-  heatFlowReader->Update();
-
-  typename HeatFlowImageType::Pointer originalImage =
-    heatFlowReader->GetOutput();
+  int numContours = static_cast<int>( contourValues.size() );
+  std::cout << "Num contours: " << numContours << std::endl;
 
   vtkSmartPointer<vtkAlgorithm> reader;
   std::string vtkExtension( ".vtk" );
@@ -170,60 +182,6 @@ int DoIt( int argc, char* argv[], T )
   transformedSegmentationSurface->
     SetInputConnection( reader->GetOutputPort() );
 
-  // Input images are in LPS coordinate system while segmented surface
-  // is in RAS. Do everything in LPS.
-
-  // First verify that image is in LPS orientation
-  typename HeatFlowImageType::DirectionType originalImageDirection =
-    originalImage->GetDirection();
-
-  typename HeatFlowImageType::DirectionType LPSDirection;
-  LPSDirection.SetIdentity();
-
-  bool notLPS = false;
-  for ( int i = 0; i < 3; ++i )
-    {
-    for ( int j = 0; j < 3; ++j )
-      {
-      if (abs(originalImageDirection[i][j] - LPSDirection[i][j]) > 1e-6)
-        {
-        notLPS = true;
-        break;
-        }
-      }
-    }
-
-  if ( notLPS )
-    {
-    std::cerr << "Heat flow image is not in LPS coordinate system.\n";
-    return EXIT_FAILURE;
-    }
-
-  // Convert ITK image to VTK image
-  typedef itk::ImageToVTKImageFilter< HeatFlowImageType > ITK2VTKFilterType;
-  typename ITK2VTKFilterType::Pointer itk2vtkFilter = ITK2VTKFilterType::New();
-  itk2vtkFilter->SetInput( originalImage );
-  itk2vtkFilter->Update();
-
-  // Threshold the image file to get rid of the NaNs
-  std::cout << "Thresholding... ";
-  vtkSmartPointer<vtkThreshold> threshold = vtkSmartPointer<vtkThreshold>::New();
-  threshold->ThresholdBetween(0.0, 1.0);
-  threshold->AllScalarsOff();
-  threshold->SetInputData( itk2vtkFilter->GetOutput() );
-  threshold->Update();
-  std::cout << "done\n";
-
-  // Now create a set of 1000 contours along the heat flow image
-  std::cout << "Creating contours... ";
-  vtkIdType numContours = 1000;
-  vtkSmartPointer<vtkContourFilter> contourFilter =
-    vtkSmartPointer<vtkContourFilter>::New();
-  contourFilter->GenerateValues( numContours, 0.0, 1.0 );
-  contourFilter->SetInputConnection( threshold->GetOutputPort() );
-  contourFilter->Update();
-  std::cout << "done\n";
-
   // Point data with heat flow values
   vtkSmartPointer<vtkDoubleArray> heatValues = vtkSmartPointer<vtkDoubleArray>::New();
   heatValues->SetName( "heat" );
@@ -260,12 +218,17 @@ int DoIt( int argc, char* argv[], T )
   vtkSmartPointer<vtkAppendPolyData> appender =
     vtkSmartPointer<vtkAppendPolyData>::New();
 
+  vtkSmartPointer<vtkAppendPolyData> appendCuts =
+    vtkSmartPointer<vtkAppendPolyData>::New();
+
   bool firstCrossSection = true;
   double previousCenterlinePoint[3] = {0.0, 0.0, 0.0};
 
   for ( vtkIdType contourID = numContours-1; contourID >= 0; --contourID )
+    //for ( vtkIdType contourID = 450; contourID >= 420; --contourID )
     {
-    double scalar = contourFilter->GetValue( contourID );
+    //double scalar = contourFilter->GetValue( contourID );
+    double scalar = contourValues[contourID];
 
     std::cout << "Processing contour " << contourID << " - " << scalar <<std::endl;
 
@@ -273,7 +236,7 @@ int DoIt( int argc, char* argv[], T )
     vtkSmartPointer<vtkThreshold> scalarThreshold = vtkSmartPointer<vtkThreshold>::New();
     scalarThreshold->ThresholdBetween( scalar - 1e-5, scalar + 1e-5 );
     scalarThreshold->AllScalarsOn();
-    scalarThreshold->SetInputConnection( contourFilter->GetOutputPort() );
+    scalarThreshold->SetInputConnection( contourReader->GetOutputPort() );
 
     vtkSmartPointer<vtkDataSetSurfaceFilter> surfaceFilter =
       vtkSmartPointer<vtkDataSetSurfaceFilter>::New();
@@ -364,6 +327,14 @@ int DoIt( int argc, char* argv[], T )
     vtkSmartPointer<vtkContourCompleter> completer =
       vtkSmartPointer<vtkContourCompleter>::New();
     completer->SetInputConnection( cutter->GetOutputPort() );
+    completer->Update();
+
+    vtkSmartPointer<vtkXMLPolyDataWriter> writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+    char fileNameBuffer[1024];
+    sprintf(fileNameBuffer, "%s-%04lld.vtp", outputCrossSections.c_str(), contourID);
+    writer->SetFileName( fileNameBuffer );
+    writer->SetInputConnection( completer->GetOutputPort() );
+    writer->Write();
 
     vtkSmartPointer<vtkContourTriangulator> triangulate =
       vtkSmartPointer<vtkContourTriangulator>::New();
@@ -375,7 +346,10 @@ int DoIt( int argc, char* argv[], T )
     connected->SetExtractionModeToClosestPointRegion();
     connected->SetClosestPoint( previousCenterlinePoint );
     connected->SetInputConnection( triangulate->GetOutputPort() );
+    //connected->SetInputConnection( completer->GetOutputPort() );
     connected->Update();
+
+    appendCuts->AddInputConnection( completer->GetOutputPort() );
 
     vtkIdType numCells = connected->GetOutput()->GetNumberOfPolys();
     if ( numCells == 0 )
@@ -392,6 +366,8 @@ int DoIt( int argc, char* argv[], T )
 
       continue;
       }
+
+    appendCuts->AddInputConnection( completer->GetOutputPort() );
 
     appender->AddInputConnection( connected->GetOutputPort() );
     connected->Update();
@@ -434,6 +410,8 @@ int DoIt( int argc, char* argv[], T )
         averageNormal[i] += area * normal[i];
         }
       }
+
+    std::cout << " - area: " << totalArea << std::endl << std::flush;
 
     if ( totalArea > 0.0 )
       {
@@ -561,6 +539,13 @@ int DoIt( int argc, char* argv[], T )
   pdWriter->SetInputData( outputCopy );
   pdWriter->Write();
 
+  transformFilter->SetInputConnection( appendCuts->GetOutputPort() );
+  transformFilter->Update();
+
+  pdWriter->SetFileName( (outputCrossSections + "-cuts.vtp").c_str() );
+  pdWriter->SetInputConnection( transformFilter->GetOutputPort() );
+  pdWriter->Write();
+
   // Write CSV file
   vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
   table->AddColumn( centerOfMassInfo );
@@ -573,49 +558,6 @@ int DoIt( int argc, char* argv[], T )
   tableWriter->SetInputData( table );
   tableWriter->SetFileName( outputCSVFile.c_str() );
   tableWriter->Write();
-
-  return returnValue;
-}
-
-
-/*******************************************************************/
-int main( int argc, char* argv[] )
-{
-  PARSE_ARGS;
-
-  itk::ImageIOBase::IOPixelType     inputPixelType;
-  itk::ImageIOBase::IOComponentType inputComponentType;
-
-  int returnValue = EXIT_SUCCESS;
-
-  try
-    {
-    GetImageType( heatFlowImage, inputPixelType, inputComponentType );
-
-    switch ( inputComponentType )
-      {
-
-      case itk::ImageIOBase::FLOAT:
-        returnValue = DoIt( argc, argv, static_cast< float >( 0 ) );
-        break;
-
-      case itk::ImageIOBase::DOUBLE:
-        returnValue = DoIt( argc, argv, static_cast< double >( 0 ) );
-        break;
-
-      default:
-        std::cerr << "Unknown component type" << std::endl;
-        break;
-      }
-
-    }
-  catch ( itk::ExceptionObject & except )
-    {
-    std::cerr << argv[0] << ": exception caught!" << std::endl;
-    std::cerr << except << std::endl;
-
-    returnValue = EXIT_FAILURE;
-    }
 
   return returnValue;
 }
