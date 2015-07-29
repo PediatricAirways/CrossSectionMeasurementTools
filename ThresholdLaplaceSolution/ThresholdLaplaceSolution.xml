@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<executable>
+  <category>Filtering</category>
+  <title>Threshold Laplace Solution</title>
+  <description><![CDATA[Thresholds the Laplace solution image to produce an unstructured grid.]]></description>
+  <version>1.0</version>
+  <documentation-url>TODO</documentation-url>
+  <license>Apache 2.0</license>
+  <contributor>Cory Quammen</contributor>
+  <acknowledgements><![CDATA[TODO]]></acknowledgements>
+  <parameters>
+    <label>Input/Output</label>
+    <description><![CDATA[Input/Output Parameters]]></description>
+    <image>
+      <name>heatFlowImage</name>
+      <label>Heat flow image</label>
+      <channel>input</channel>
+      <index>0</index>
+      <default>None</default>
+      <description><![CDATA[Input heat flow image from segmentation.]]></description>
+    </image>
+    <file>
+      <name>thresholdOutput</name>
+      <label>Thresholded result</label>
+      <channel>output</channel>
+      <index>0</index>
+      <default></default>
+      <description><![CDATA[Output thresholded file.]]></description>
+    </file>
+  </parameters>
+</executable>
