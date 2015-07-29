@@ -50,11 +50,9 @@ int processMetadata(const char *path)
 
   // Skip commented lines in the CSV
   std::ifstream in(path);
-  std::cout << "opening '" << path << "'\n";
   std::string line;
   while (std::getline(in, line))
     {
-    std::cout << "line: " << line << std::endl;
     if (line[0] != '#')
       {
       oss << line << std::endl;
@@ -73,8 +71,6 @@ int processMetadata(const char *path)
 
   vtkTable *table = reader->GetOutput();
   assert(table);
-
-  std::cout << table->GetNumberOfRows() << std::endl;
 
   bool noseTipFound = false;
   bool epiglottisTipFound = false;
