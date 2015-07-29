@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<executable>
+  <category>Filtering</category>
+  <title>Compute Heat Contours</title>
+  <description><![CDATA[Computes contours through the heat flow unstructured grid.]]></description>
+  <version>1.0</version>
+  <documentation-url>TODO</documentation-url>
+  <license>Apache 2.0</license>
+  <contributor>Cory Quammen</contributor>
+  <acknowledgements><![CDATA[TODO]]></acknowledgements>
+  <parameters>
+    <label>Input/Output</label>
+    <description><![CDATA[Input/Output Parameters]]></description>
+    <file>
+      <name>input</name>
+      <label>Input Unstructured Grid</label>
+      <channel>input</channel>
+      <index>0</index>
+      <default>None</default>
+      <description><![CDATA[Input heat flow unstructured grid file.]]></description>
+    </file>
+    <file>
+      <name>output</name>
+      <label>Contour Output</label>
+      <channel>output</channel>
+      <index>0</index>
+      <default></default>
+      <description><![CDATA[Output contours VTP file.]]></description>
+    </file>
+  </parameters>
+</executable>
