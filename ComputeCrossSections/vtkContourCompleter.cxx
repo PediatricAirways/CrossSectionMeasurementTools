@@ -8,6 +8,7 @@
 #include <vtkObjectFactory.h>
 #include <vtkPolyDataConnectivityFilter.h>
 #include <vtkSmartPointer.h>
+#include <vtkStripper.h>
 #include <vtkThreshold.h>
 
 //----------------------------------------------------------------------------
@@ -65,35 +66,29 @@ int vtkContourCompleter::RequestData(vtkInformation*        vtkNotUsed(request),
     vtkSmartPointer<vtkDataSetSurfaceFilter> surfaceFilter =
       vtkSmartPointer<vtkDataSetSurfaceFilter>::New();
     surfaceFilter->SetInputConnection( scalarThreshold->GetOutputPort() );
-    surfaceFilter->Update();
+
+    vtkSmartPointer<vtkStripper> stripper =
+      vtkSmartPointer<vtkStripper>::New();
+    stripper->JoinContiguousSegmentsOn();
+    stripper->SetInputConnection( surfaceFilter->GetOutputPort() );
+    stripper->Update();
 
     vtkSmartPointer<vtkPolyData> connectedPD = vtkSmartPointer<vtkPolyData>::New();
-    connectedPD->DeepCopy(surfaceFilter->GetOutput());
+    connectedPD->DeepCopy( stripper->GetOutput() );
 
-    // Find up to two points that are not connected and connect them
-    vtkIdType numPts = 0, pointIds[2] = { -1, -1 };
-    vtkSmartPointer<vtkIdList> cellIds = vtkSmartPointer<vtkIdList>::New();
-    for (int ptId = 0; ptId < connectedPD->GetNumberOfPoints(); ++ptId)
+    vtkSmartPointer<vtkIdList> pts = vtkSmartPointer<vtkIdList>::New();
+    connectedPD->GetCellPoints(0, pts);
+
+    vtkIdType firstPt = pts->GetId(0);
+    vtkIdType lastPt = pts->GetId( pts->GetNumberOfIds()-1 );
+    if (firstPt != lastPt)
       {
-      connectedPD->GetPointCells(ptId, cellIds);
-      int numCells = cellIds->GetNumberOfIds();
-      if (numCells == 1)
-        {
-        pointIds[numPts] = ptId;
-        ++numPts;
-        if (numPts == 2)
-          {
-          break;
-          }
-        }
+      // Insert the first point as the last to complete the contour
+      pts->InsertNextId(firstPt);
       }
 
-    if (numPts == 2)
-      {
-      // Connect the two points with 1 cell each.
-      connectedPD->InsertNextCell(VTK_LINE, 2, pointIds);
-      }
-
+    connectedPD->ReplaceCell( 0, pts->GetNumberOfIds(), pts->GetPointer(0) );
+    
     appender->AddInputData(connectedPD);
     }
 
