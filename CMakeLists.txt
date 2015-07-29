@@ -27,12 +27,14 @@ endif()
 
 add_subdirectory(ComputeLaplaceSolution)
 add_subdirectory(ComputeCrossSections)
+add_subdirectory(ComputeHeatContours)
 add_subdirectory(ConvertDICOMToNRRD)
 add_subdirectory(RemoveSphere)
 add_subdirectory(ExtractCrossSections)
 add_subdirectory(ComputeLBMBoundaries)
 add_subdirectory(ResampleImage)
 add_subdirectory(SplitEpiglottisCrossSection)
+add_subdirectory(ThresholdLaplaceSolution)
 add_subdirectory(Utilities)
 
 # Unused utility to convert a polydata to a binary image
