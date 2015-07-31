@@ -329,12 +329,14 @@ int main( int argc, char* argv[] )
     completer->SetInputConnection( cutter->GetOutputPort() );
     completer->Update();
 
+#if 0
     vtkSmartPointer<vtkXMLPolyDataWriter> writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
     char fileNameBuffer[1024];
     sprintf(fileNameBuffer, "%s-%04lld.vtp", outputCrossSections.c_str(), contourID);
     writer->SetFileName( fileNameBuffer );
     writer->SetInputConnection( completer->GetOutputPort() );
     writer->Write();
+#endif
 
     vtkSmartPointer<vtkContourTriangulator> triangulate =
       vtkSmartPointer<vtkContourTriangulator>::New();
