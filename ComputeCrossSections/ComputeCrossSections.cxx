@@ -357,14 +357,14 @@ int main( int argc, char* argv[] )
     if ( numCells == 0 )
       {
       double zero = 0.0;
-      areaInfo->SetTupleValue( contourID, &zero );
-      perimeterInfo->SetTupleValue( contourID, &zero );
+      areaInfo->SetTypedTuple( contourID, &zero );
+      perimeterInfo->SetTypedTuple( contourID, &zero );
 
       // Assume contourID + 1 is valid...
-      centerOfMassInfo->GetTupleValue( contourID + 1, centerOfMass );
-      centerOfMassInfo->SetTupleValue( contourID, centerOfMass );
-      averageNormalInfo->GetTupleValue( contourID + 1, averageNormal );
-      averageNormalInfo->SetTupleValue( contourID, averageNormal );
+      centerOfMassInfo->GetTypedTuple( contourID + 1, centerOfMass );
+      centerOfMassInfo->SetTypedTuple( contourID, centerOfMass );
+      averageNormalInfo->GetTypedTuple( contourID + 1, averageNormal );
+      averageNormalInfo->SetTypedTuple( contourID, averageNormal );
 
       continue;
       }
@@ -378,13 +378,13 @@ int main( int argc, char* argv[] )
     // Add heat values to point array
     for ( vtkIdType ptId = 0; ptId < pd->GetNumberOfPoints(); ++ptId )
       {
-      heatValues->InsertNextTupleValue( &scalar );
+      heatValues->InsertNextTypedTuple( &scalar );
       }
 
     // Add contour ID to cell array
     for ( vtkIdType cellId = 0; cellId < pd->GetNumberOfCells(); ++cellId )
       {
-      contourIDs->InsertNextTupleValue( &contourID );
+      contourIDs->InsertNextTypedTuple( &contourID );
       }
 
     // Now measure the surface area of the planar cross section
@@ -496,10 +496,10 @@ int main( int argc, char* argv[] )
         }
       }
 
-    areaInfo->SetTupleValue( contourID, &surfaceArea );
-    perimeterInfo->SetTupleValue( contourID, &perimeter );
-    centerOfMassInfo->SetTupleValue( contourID, centerOfMass );
-    averageNormalInfo->SetTupleValue( contourID, averageNormal );
+    areaInfo->SetTypedTuple( contourID, &surfaceArea );
+    perimeterInfo->SetTypedTuple( contourID, &perimeter );
+    centerOfMassInfo->SetTypedTuple( contourID, centerOfMass );
+    averageNormalInfo->SetTypedTuple( contourID, averageNormal );
     }
 
   // VTK data has no associated transform, so Slicer assumes it is

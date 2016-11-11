@@ -174,37 +174,37 @@ int main( int argc, char* argv[] )
 
     // Add field data entries
     vtkIdType queryPtID = static_cast<vtkIdType>( inputPtID );
-    queryPtIDInfo->InsertNextTupleValue( &queryPtID );
+    queryPtIDInfo->InsertNextTypedTuple( &queryPtID );
 
     std::string queryPtName = queryPointNames[ inputPtID ];
     queryPtNameInfo->InsertNextValue( queryPtName.c_str() );
 
     vtkIdType contourID = static_cast<vtkIdType>( nearestScalar );
-    contourIDInfo->InsertNextTupleValue( &contourID );
+    contourIDInfo->InsertNextTypedTuple( &contourID );
 
     double tuple[3];
     if ( inputCenterOfMassInfo )
       {
-      inputCenterOfMassInfo->GetTupleValue( contourID, tuple );
-      centerOfMassInfo->InsertNextTupleValue( tuple );
+      inputCenterOfMassInfo->GetTypedTuple( contourID, tuple );
+      centerOfMassInfo->InsertNextTypedTuple( tuple );
       }
 
     if ( inputAverageNormalInfo )
       {
-      inputAverageNormalInfo->GetTupleValue( contourID, tuple );
-      averageNormalInfo->InsertNextTupleValue( tuple );
+      inputAverageNormalInfo->GetTypedTuple( contourID, tuple );
+      averageNormalInfo->InsertNextTypedTuple( tuple );
       }
 
     if ( inputAreaInfo )
       {
-      inputAreaInfo->GetTupleValue( contourID, tuple );
-      areaInfo->InsertNextTupleValue( tuple );
+      inputAreaInfo->GetTypedTuple( contourID, tuple );
+      areaInfo->InsertNextTypedTuple( tuple );
       }
 
     if ( inputAreaInfo )
       {
-      inputPerimeterInfo->GetTupleValue( contourID, tuple );
-      perimeterInfo->InsertNextTupleValue( tuple );
+      inputPerimeterInfo->GetTypedTuple( contourID, tuple );
+      perimeterInfo->InsertNextTypedTuple( tuple );
       }
     }
 

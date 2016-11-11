@@ -33,7 +33,7 @@ int main( int argc, char* argv[])
     vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
   reader->SetFileName(input.c_str());
 
-  vtkIdType numContours = 1000;
+  vtkIdType numContours = 100;
   vtkSmartPointer<vtkContourFilter> contourFilter =
     vtkSmartPointer<vtkContourFilter>::New();
   contourFilter->GenerateValues( numContours, 0.0, 1.0 );
